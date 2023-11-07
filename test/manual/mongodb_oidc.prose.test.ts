@@ -48,6 +48,24 @@ describe('MONGODB-OIDC', function () {
       };
     };
 
+    // Creates a refresh function for use in the test.
+    const createRefreshCallback = (
+      username = 'test_user1',
+      expiresInSeconds?: number,
+      extraFields?: any
+    ) => {
+      return async (info: IdPServerInfo, context: OIDCCallbackContext) => {
+        const token = await readFile(path.join(process.env.OIDC_TOKEN_DIR, username), {
+          encoding: 'utf8'
+        });
+        // Do some basic property assertions.
+        expect(context).to.have.property('timeoutSeconds');
+        expect(info).to.have.property('issuer');
+        expect(info).to.have.property('clientId');
+        return generateResult(token, expiresInSeconds, extraFields);
+      };
+    };
+
     // Generates the result the request or refresh callback returns.
     const generateResult = (token: string, expiresInSeconds?: number, extraFields?: any) => {
       const response: OIDCRequestTokenResult = { accessToken: token };

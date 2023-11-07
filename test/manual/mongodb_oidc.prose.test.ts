@@ -48,24 +48,6 @@ describe('MONGODB-OIDC', function () {
       };
     };
 
-    // Creates a refresh function for use in the test.
-    const createRefreshCallback = (
-      username = 'test_user1',
-      expiresInSeconds?: number,
-      extraFields?: any
-    ) => {
-      return async (info: IdPServerInfo, context: OIDCCallbackContext) => {
-        const token = await readFile(path.join(process.env.OIDC_TOKEN_DIR, username), {
-          encoding: 'utf8'
-        });
-        // Do some basic property assertions.
-        expect(context).to.have.property('timeoutSeconds');
-        expect(info).to.have.property('issuer');
-        expect(info).to.have.property('clientId');
-        return generateResult(token, expiresInSeconds, extraFields);
-      };
-    };
-
     // Generates the result the request or refresh callback returns.
     const generateResult = (token: string, expiresInSeconds?: number, extraFields?: any) => {
       const response: OIDCRequestTokenResult = { accessToken: token };
@@ -96,7 +78,8 @@ describe('MONGODB-OIDC', function () {
 
       describe('1.1 Single Principal Implicit Username', function () {
         before(function () {
-          client = new MongoClient('mongodb://localhost/?authMechanism=MONGODB-OIDC', {
+          // Create the default OIDC client.
+          client = new MongoClient(process.env.MONGODB_URI_SINGLE, {
             authMechanismProperties: {
               REQUEST_TOKEN_CALLBACK: createRequestCallback()
             }
@@ -104,10 +87,6 @@ describe('MONGODB-OIDC', function () {
           collection = client.db('test').collection('test');
         });
 
-        // Clear the cache.
-        // Create a request callback returns a valid token.
-        // Create a client that uses the default OIDC url and the request callback.
-        // Perform a find operation. that succeeds.
         // Close the client.
         it('successfully authenticates', async function () {
           const result = await collection.findOne();
@@ -117,7 +96,10 @@ describe('MONGODB-OIDC', function () {
 
       describe('1.2 Single Principal Explicit Username', function () {
         before(function () {
-          client = new MongoClient('mongodb://test_user1@localhost/?authMechanism=MONGODB-OIDC', {
+          // Create a client with ``MONGODB_URI_SINGLE``, a username of ``test_user1``, and the OIDC request callback.
+          const url = new URL(process.env.MONGODB_URI_SINGLE);
+          url.username = 'test_user1';
+          client = new MongoClient(url.toString(), {
             authMechanismProperties: {
               REQUEST_TOKEN_CALLBACK: createRequestCallback()
             }
@@ -125,9 +107,6 @@ describe('MONGODB-OIDC', function () {
           collection = client.db('test').collection('test');
         });
 
-        // Clear the cache.
-        // Create a request callback that returns a valid token.
-        // Create a client with a url of the form mongodb://test_user1@localhost/?authMechanism=MONGODB-OIDC and the OIDC request callback.
         // Perform a find operation that succeeds.
         // Close the client.
         it('successfully authenticates', async function () {
@@ -138,20 +117,17 @@ describe('MONGODB-OIDC', function () {
 
       describe('1.3 Multiple Principal User 1', function () {
         before(function () {
-          client = new MongoClient(
-            'mongodb://test_user1@localhost:27018/?authMechanism=MONGODB-OIDC&directConnection=true&readPreference=secondaryPreferred',
-            {
-              authMechanismProperties: {
-                REQUEST_TOKEN_CALLBACK: createRequestCallback()
-              }
+          // Create a client with ``MONGODB_URI_MULTI``, a username of ``test_user1``, and the OIDC request callback.
+          const url = new URL(process.env.MONGODB_URI_MULTI);
+          url.username = 'test_user1';
+          client = new MongoClient(url.toString(), {
+            authMechanismProperties: {
+              REQUEST_TOKEN_CALLBACK: createRequestCallback()
             }
-          );
+          });
           collection = client.db('test').collection('test');
         });
 
-        // Clear the cache.
-        // Create a request callback that returns a valid token.
-        // Create a client with a url of the form mongodb://test_user1@localhost:27018/?authMechanism=MONGODB-OIDC&directConnection=true&readPreference=secondaryPreferred and a valid OIDC request callback.
         // Perform a find operation that succeeds.
         // Close the client.
         it('successfully authenticates', async function () {
@@ -162,20 +138,17 @@ describe('MONGODB-OIDC', function () {
 
       describe('1.4 Multiple Principal User 2', function () {
         before(function () {
-          client = new MongoClient(
-            'mongodb://test_user2@localhost:27018/?authMechanism=MONGODB-OIDC&directConnection=true&readPreference=secondaryPreferred',
-            {
-              authMechanismProperties: {
-                REQUEST_TOKEN_CALLBACK: createRequestCallback('test_user2')
-              }
+          // Create a client with ``MONGODB_URI_MULTI``, a username of ``test_user2``, and the OIDC request callback.
+          const url = new URL(process.env.MONGODB_URI_MULTI);
+          url.username = 'test_user2';
+          client = new MongoClient(url.toString(), {
+            authMechanismProperties: {
+              REQUEST_TOKEN_CALLBACK: createRequestCallback()
             }
-          );
+          });
           collection = client.db('test').collection('test');
         });
 
-        // Clear the cache.
-        // Create a request callback that reads in the generated test_user2 token file.
-        // Create a client with a url of the form mongodb://test_user2@localhost:27018/?authMechanism=MONGODB-OIDC&directConnection=true&readPreference=secondaryPreferred and a valid OIDC request callback.
         // Perform a find operation that succeeds.
         // Close the client.
         it('successfully authenticates', async function () {
@@ -186,19 +159,15 @@ describe('MONGODB-OIDC', function () {
 
       describe('1.5  Multiple Principal No User', function () {
         before(function () {
-          client = new MongoClient(
-            'mongodb://localhost:27018/?authMechanism=MONGODB-OIDC&directConnection=true&readPreference=secondaryPreferred',
-            {
-              authMechanismProperties: {
-                REQUEST_TOKEN_CALLBACK: createRequestCallback()
-              }
+          // Create a client with ``MONGODB_URI_MULTI``, no username, and the OIDC request callback.
+          client = new MongoClient(process.env.MONGODB_URI_MULTI, {
+            authMechanismProperties: {
+              REQUEST_TOKEN_CALLBACK: createRequestCallback()
             }
-          );
+          });
           collection = client.db('test').collection('test');
         });
 
-        // Clear the cache.
-        // Create a client with a url of the form mongodb://localhost:27018/?authMechanism=MONGODB-OIDC&directConnection=true&readPreference=secondaryPreferred and a valid OIDC request callback.
         // Assert that a find operation fails.
         // Close the client.
         it('fails authentication', async function () {
@@ -217,22 +186,22 @@ describe('MONGODB-OIDC', function () {
           cache.clear();
         });
 
-        // Clear the cache.
-        // Create a client that uses the OIDC url and a request callback, and an
-        // ``ALLOWED_HOSTS`` that is an empty list.
         // Assert that a ``find`` operation fails with a client-side error.
         // Close the client.
         context('when ALLOWED_HOSTS is empty', function () {
           before(function () {
+            // Create a default OIDC client, with an ``ALLOWED_HOSTS`` that is an empty list.
             client = new MongoClient('mongodb://localhost/?authMechanism=MONGODB-OIDC', {
               authMechanismProperties: {
                 ALLOWED_HOSTS: [],
-                REQUEST_TOKEN_CALLBACK: createRequestCallback('test_user1', 600)
+                REQUEST_TOKEN_CALLBACK: createRequestCallback()
               }
             });
             collection = client.db('test').collection('test');
           });
 
+          // Assert that a ``find`` operation fails with a client-side error.
+          // Close the client.
           it('fails validation', async function () {
             const error = await collection.findOne().catch(error => error);
             expect(error).to.be.instanceOf(MongoInvalidArgumentError);

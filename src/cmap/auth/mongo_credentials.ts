@@ -38,6 +38,7 @@ const ALLOWED_HOSTS_ERROR = 'Auth mechanism property ALLOWED_HOSTS must be an ar
 /** @internal */
 export const DEFAULT_ALLOWED_HOSTS = [
   '*.mongodb.net',
+  '*.mongodb-qa.net',
   '*.mongodb-dev.net',
   '*.mongodbgov.net',
   'localhost',

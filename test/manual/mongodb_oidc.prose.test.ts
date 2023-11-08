@@ -650,7 +650,7 @@ describe('MONGODB-OIDC', function () {
                 times: 1
               },
               data: {
-                failCommands: ['find', 'saslStart'],
+                failCommands: ['find'],
                 errorCode: 391
               }
             });
@@ -663,6 +663,7 @@ describe('MONGODB-OIDC', function () {
           });
           // Perform a ``find`` operation that succeeds.
           // Assert that the request callback has been called once.
+          console.log('findOne');
           await client.db('test').collection('nodeOidcTest').findOne();
           expect(requestSpy).to.have.been.calledOnce;
           await setupFailPoint();

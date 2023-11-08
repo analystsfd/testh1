@@ -579,7 +579,8 @@ describe('MONGODB-OIDC', function () {
           //   emit saslStart or saslContinue events. If the driver does emit those events,
           //   ignore/filter them for the purposes of this test.
           client = new MongoClient(`${process.env.MONGODB_URI_SINGLE}?authMechanism=MONGODB-OIDC`, {
-            authMechanismProperties: authMechanismProperties
+            authMechanismProperties: authMechanismProperties,
+            monitorCommands: true
           });
           // Perform a find operation that succeeds.
           // Assert that the request callback has been called once.

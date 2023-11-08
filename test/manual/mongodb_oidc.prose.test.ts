@@ -97,7 +97,7 @@ describe('MONGODB-OIDC', function () {
       describe('1.1 Single Principal Implicit Username', function () {
         before(function () {
           // Create the default OIDC client.
-          client = new MongoClient(process.env.MONGODB_URI_SINGLE, {
+          client = new MongoClient(`${process.env.MONGODB_URI_SINGLE}?authMechanism=MONGODB-OIDC`, {
             authMechanismProperties: {
               REQUEST_TOKEN_CALLBACK: createRequestCallback()
             }
@@ -117,6 +117,7 @@ describe('MONGODB-OIDC', function () {
           // Create a client with ``MONGODB_URI_SINGLE``, a username of ``test_user1``, and the OIDC request callback.
           const url = new URL(process.env.MONGODB_URI_SINGLE);
           url.username = 'test_user1';
+          url.searchParams.set('authMechanism', 'MONGODB-OIDC');
           client = new MongoClient(url.toString(), {
             authMechanismProperties: {
               REQUEST_TOKEN_CALLBACK: createRequestCallback()
@@ -138,6 +139,7 @@ describe('MONGODB-OIDC', function () {
           // Create a client with ``MONGODB_URI_MULTI``, a username of ``test_user1``, and the OIDC request callback.
           const url = new URL(process.env.MONGODB_URI_MULTI);
           url.username = 'test_user1';
+          url.searchParams.set('authMechanism', 'MONGODB-OIDC');
           client = new MongoClient(url.toString(), {
             authMechanismProperties: {
               REQUEST_TOKEN_CALLBACK: createRequestCallback()
@@ -159,6 +161,7 @@ describe('MONGODB-OIDC', function () {
           // Create a client with ``MONGODB_URI_MULTI``, a username of ``test_user2``, and the OIDC request callback.
           const url = new URL(process.env.MONGODB_URI_MULTI);
           url.username = 'test_user2';
+          url.searchParams.set('authMechanism', 'MONGODB-OIDC');
           client = new MongoClient(url.toString(), {
             authMechanismProperties: {
               REQUEST_TOKEN_CALLBACK: createRequestCallback()
@@ -178,7 +181,7 @@ describe('MONGODB-OIDC', function () {
       describe('1.5  Multiple Principal No User', function () {
         before(function () {
           // Create a client with ``MONGODB_URI_MULTI``, no username, and the OIDC request callback.
-          client = new MongoClient(process.env.MONGODB_URI_MULTI, {
+          client = new MongoClient(`${process.env.MONGODB_URI_MULTI}?authMechanism=MONGODB-OIDC`, {
             authMechanismProperties: {
               REQUEST_TOKEN_CALLBACK: createRequestCallback()
             }

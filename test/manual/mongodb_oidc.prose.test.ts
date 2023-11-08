@@ -102,7 +102,7 @@ describe('MONGODB-OIDC', function () {
               REQUEST_TOKEN_CALLBACK: createRequestCallback()
             }
           });
-          collection = client.db('test').collection('test');
+          collection = client.db('test').collection('nodeOidcTest');
         });
 
         // Close the client.
@@ -123,7 +123,7 @@ describe('MONGODB-OIDC', function () {
               REQUEST_TOKEN_CALLBACK: createRequestCallback()
             }
           });
-          collection = client.db('test').collection('test');
+          collection = client.db('test').collection('nodeOidcTest');
         });
 
         // Perform a find operation that succeeds.
@@ -145,7 +145,7 @@ describe('MONGODB-OIDC', function () {
               REQUEST_TOKEN_CALLBACK: createRequestCallback()
             }
           });
-          collection = client.db('test').collection('test');
+          collection = client.db('test').collection('nodeOidcTest');
         });
 
         // Perform a find operation that succeeds.
@@ -167,7 +167,7 @@ describe('MONGODB-OIDC', function () {
               REQUEST_TOKEN_CALLBACK: createRequestCallback()
             }
           });
-          collection = client.db('test').collection('test');
+          collection = client.db('test').collection('nodeOidcTest');
         });
 
         // Perform a find operation that succeeds.
@@ -186,7 +186,7 @@ describe('MONGODB-OIDC', function () {
               REQUEST_TOKEN_CALLBACK: createRequestCallback()
             }
           });
-          collection = client.db('test').collection('test');
+          collection = client.db('test').collection('nodeOidcTest');
         });
 
         // Assert that a find operation fails.

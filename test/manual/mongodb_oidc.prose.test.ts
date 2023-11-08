@@ -634,7 +634,7 @@ describe('MONGODB-OIDC', function () {
       });
 
       describe('5.2 Succeeds no refresh', function () {
-        const requestCallback = createRequestCallback('test_user1', 600, { accessToken: '' });
+        const requestCallback = createRequestCallback('test_user1', 600);
         const requestSpy = sinon.spy(requestCallback);
         const authMechanismProperties = {
           REQUEST_TOKEN_CALLBACK: requestSpy
@@ -663,7 +663,6 @@ describe('MONGODB-OIDC', function () {
           });
           // Perform a ``find`` operation that succeeds.
           // Assert that the request callback has been called once.
-          console.log('findOne');
           await client.db('test').collection('nodeOidcTest').findOne();
           expect(requestSpy).to.have.been.calledOnce;
           await setupFailPoint();
@@ -679,11 +678,11 @@ describe('MONGODB-OIDC', function () {
         // {
         //   "configureFailPoint": "failCommand",
         //   "mode": {
-        //     "times": 2
+        //     "times": 1
         //   },
         //   "data": {
         //     "failCommands": [
-        //       "find", "saslStart"
+        //       "find"
         //     ],
         //     "errorCode": 391
         //   }

@@ -8,7 +8,7 @@ import {
   MongoMissingCredentialsError
 } from '../../error';
 import { GSSAPICanonicalizationValue } from './gssapi';
-import type { OIDCRefreshFunction, OIDCRequestFunction } from './mongodb_oidc';
+import type { OIDCRequestFunction } from './mongodb_oidc';
 import { AUTH_MECHS_AUTH_SRC_EXTERNAL, AuthMechanism } from './providers';
 
 // https://github.com/mongodb/specifications/blob/master/source/auth/auth.rst
@@ -58,8 +58,6 @@ export interface AuthMechanismProperties extends Document {
   AWS_SESSION_TOKEN?: string;
   /** @experimental */
   REQUEST_TOKEN_CALLBACK?: OIDCRequestFunction;
-  /** @experimental */
-  REFRESH_TOKEN_CALLBACK?: OIDCRefreshFunction;
   /** @experimental */
   PROVIDER_NAME?: 'aws' | 'azure';
   /** @experimental */

@@ -52,15 +52,6 @@ export type OIDCRequestFunction = (
   context: OIDCCallbackContext
 ) => Promise<IdPServerResponse>;
 
-/**
- * @public
- * @experimental
- */
-export type OIDCRefreshFunction = (
-  info: IdPServerInfo,
-  context: OIDCCallbackContext
-) => Promise<IdPServerResponse>;
-
 type ProviderName = 'aws' | 'azure' | 'callback';
 
 export interface Workflow {

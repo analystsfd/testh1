@@ -1,6 +1,6 @@
 import { Binary, BSON, type Document } from 'bson';
 
-import { MONGODB_ERROR_CODES, MongoError, MongoMissingCredentialsError } from '../../../error';
+import { MongoMissingCredentialsError } from '../../../error';
 import { ns } from '../../../utils';
 import type { Connection } from '../../connection';
 import type { MongoCredentials } from '../mongo_credentials';
@@ -8,13 +8,10 @@ import type {
   IdPServerInfo,
   IdPServerResponse,
   OIDCCallbackContext,
-  OIDCRefreshFunction,
   OIDCRequestFunction,
   Workflow
 } from '../mongodb_oidc';
 import { AuthMechanism } from '../providers';
-import { CallbackLockCache } from './callback_lock_cache';
-import { TokenEntryCache } from './token_entry_cache';
 
 /** The current version of OIDC implementation. */
 const OIDC_VERSION = 0;
@@ -29,22 +26,13 @@ const RESULT_PROPERTIES = ['accessToken', 'expiresInSeconds', 'refreshToken'];
 const CALLBACK_RESULT_ERROR =
   'User provided OIDC callbacks must return a valid object with an accessToken.';
 
+const NO_REQUEST_CALLBACK = 'No REQUEST_TOKEN_CALLBACK provided for callback workflow.';
+
 /**
  * OIDC implementation of a callback based workflow.
  * @internal
  */
 export class CallbackWorkflow implements Workflow {
-  cache: TokenEntryCache;
-  callbackCache: CallbackLockCache;
-
-  /**
-   * Instantiate the workflow
-   */
-  constructor() {
-    this.cache = new TokenEntryCache();
-    this.callbackCache = new CallbackLockCache();
-  }
-
   /**
    * Get the document to add for speculative authentication. This also needs
    * to add a db field from the credentials source.
@@ -64,87 +52,32 @@ export class CallbackWorkflow implements Workflow {
     reauthenticating: boolean,
     response?: Document
   ): Promise<Document> {
-    // Get the callbacks with locks from the callback lock cache.
-    const { requestCallback, refreshCallback, callbackHash } = this.callbackCache.getEntry(
-      connection,
-      credentials
-    );
-    // Look for an existing entry in the cache.
-    const entry = this.cache.getEntry(connection.address, credentials.username, callbackHash);
-    let result;
-    if (entry) {
-      // Reauthentication cannot use a token from the cache since the server has
-      // stated it is invalid by the request for reauthentication.
-      if (entry.isValid() && !reauthenticating) {
-        // Presence of a valid cache entry means we can skip to the finishing step.
-        result = await this.finishAuthentication(
-          connection,
-          credentials,
-          entry.tokenResult,
-          response?.speculativeAuthenticate?.conversationId
-        );
-      } else {
-        // Presence of an expired cache entry means we must fetch a new one and
-        // then execute the final step.
-        const tokenResult = await this.fetchAccessToken(
-          connection,
-          credentials,
-          entry.serverInfo,
-          reauthenticating,
-          callbackHash,
-          requestCallback,
-          refreshCallback
-        );
-        try {
-          result = await this.finishAuthentication(
-            connection,
-            credentials,
-            tokenResult,
-            reauthenticating ? undefined : response?.speculativeAuthenticate?.conversationId
-          );
-        } catch (error) {
-          // If we are reauthenticating and this errors with reauthentication
-          // required, we need to do the entire process over again and clear
-          // the cache entry.
-          if (
-            reauthenticating &&
-            error instanceof MongoError &&
-            error.code === MONGODB_ERROR_CODES.Reauthenticate
-          ) {
-            this.cache.deleteEntry(connection.address, credentials.username, callbackHash);
-            result = await this.execute(connection, credentials, reauthenticating);
-          } else {
-            throw error;
-          }
-        }
-      }
-    } else {
-      // No entry in the cache requires us to do all authentication steps
-      // from start to finish, including getting a fresh token for the cache.
-      const startDocument = await this.startAuthentication(
-        connection,
-        credentials,
-        reauthenticating,
-        response
-      );
-      const conversationId = startDocument.conversationId;
-      const serverResult = BSON.deserialize(startDocument.payload.buffer) as IdPServerInfo;
-      const tokenResult = await this.fetchAccessToken(
-        connection,
-        credentials,
-        serverResult,
-        reauthenticating,
-        callbackHash,
-        requestCallback,
-        refreshCallback
-      );
-      result = await this.finishAuthentication(
-        connection,
-        credentials,
-        tokenResult,
-        conversationId
-      );
+    const requestCallback = credentials.mechanismProperties.REQUEST_TOKEN_CALLBACK;
+    if (!requestCallback) {
+      throw new MongoMissingCredentialsError(NO_REQUEST_CALLBACK);
     }
+    // No entry in the cache requires us to do all authentication steps
+    // from start to finish, including getting a fresh token for the cache.
+    const startDocument = await this.startAuthentication(
+      connection,
+      credentials,
+      reauthenticating,
+      response
+    );
+    const conversationId = startDocument.conversationId;
+    const serverResult = BSON.deserialize(startDocument.payload.buffer) as IdPServerInfo;
+    const tokenResult = await this.fetchAccessToken(
+      connection,
+      credentials,
+      serverResult,
+      requestCallback
+    );
+    const result = await this.finishAuthentication(
+      connection,
+      credentials,
+      tokenResult,
+      conversationId
+    );
     return result;
   }
 
@@ -197,50 +130,16 @@ export class CallbackWorkflow implements Workflow {
     connection: Connection,
     credentials: MongoCredentials,
     serverInfo: IdPServerInfo,
-    reauthenticating: boolean,
-    callbackHash: string,
-    requestCallback: OIDCRequestFunction,
-    refreshCallback?: OIDCRefreshFunction
+    requestCallback: OIDCRequestFunction
   ): Promise<IdPServerResponse> {
-    // Get the token from the cache.
-    const entry = this.cache.getEntry(connection.address, credentials.username, callbackHash);
-    let result;
     const context: OIDCCallbackContext = { timeoutSeconds: TIMEOUT_S, version: OIDC_VERSION };
-    // Check if there's a token in the cache.
-    if (entry) {
-      // If the cache entry is valid, return the token result.
-      if (entry.isValid() && !reauthenticating) {
-        return entry.tokenResult;
-      }
-      // If the cache entry is not valid, remove it from the cache and first attempt
-      // to use the refresh callback to get a new token. If no refresh callback
-      // exists, then fallback to the request callback.
-      if (refreshCallback) {
-        context.refreshToken = entry.tokenResult.refreshToken;
-        result = await refreshCallback(serverInfo, context);
-      } else {
-        result = await requestCallback(serverInfo, context);
-      }
-    } else {
-      // With no token in the cache we use the request callback.
-      result = await requestCallback(serverInfo, context);
-    }
+    // With no token in the cache we use the request callback.
+    const result = await requestCallback(serverInfo, context);
     // Validate that the result returned by the callback is acceptable. If it is not
     // we must clear the token result from the cache.
     if (isCallbackResultInvalid(result)) {
-      this.cache.deleteEntry(connection.address, credentials.username, callbackHash);
       throw new MongoMissingCredentialsError(CALLBACK_RESULT_ERROR);
     }
-    // Cleanup the cache.
-    this.cache.deleteExpiredEntries();
-    // Put the new entry into the cache.
-    this.cache.addEntry(
-      connection.address,
-      credentials.username || '',
-      callbackHash,
-      result,
-      serverInfo
-    );
     return result;
   }
 }

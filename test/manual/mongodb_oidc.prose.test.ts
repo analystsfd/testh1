@@ -14,7 +14,6 @@ import {
   MongoInvalidArgumentError,
   MongoMissingCredentialsError,
   MongoServerError,
-  OIDC_WORKFLOWS,
   type OIDCCallbackContext
 } from '../mongodb';
 
@@ -26,29 +25,8 @@ describe('MONGODB-OIDC', function () {
   });
 
   describe('OIDC Auth Spec Prose Tests', function () {
-    // Set up the cache variable.
-    const cache = OIDC_WORKFLOWS.get('callback').cache;
-    const callbackCache = OIDC_WORKFLOWS.get('callback').callbackCache;
     // Creates a request function for use in the test.
     const createRequestCallback = (
-      username = 'test_user1',
-      expiresInSeconds?: number,
-      extraFields?: any
-    ) => {
-      return async (info: IdPServerInfo, context: OIDCCallbackContext) => {
-        const token = await readFile(path.join(process.env.OIDC_TOKEN_DIR, username), {
-          encoding: 'utf8'
-        });
-        // Do some basic property assertions.
-        expect(context).to.have.property('timeoutSeconds');
-        expect(info).to.have.property('issuer');
-        expect(info).to.have.property('clientId');
-        return generateResult(token, expiresInSeconds, extraFields);
-      };
-    };
-
-    // Creates a refresh function for use in the test.
-    const createRefreshCallback = (
       username = 'test_user1',
       expiresInSeconds?: number,
       extraFields?: any
@@ -77,17 +55,9 @@ describe('MONGODB-OIDC', function () {
       return response;
     };
 
-    beforeEach(function () {
-      callbackCache.clear();
-    });
-
     describe('1. Callback-Driven Auth', function () {
       let client: MongoClient;
       let collection: Collection;
-
-      beforeEach(function () {
-        cache.clear();
-      });
 
       afterEach(async function () {
         await client?.close();
@@ -163,7 +133,7 @@ describe('MONGODB-OIDC', function () {
           url.searchParams.set('authMechanism', 'MONGODB-OIDC');
           client = new MongoClient(url.toString(), {
             authMechanismProperties: {
-              REQUEST_TOKEN_CALLBACK: createRequestCallback('tesst_user2')
+              REQUEST_TOKEN_CALLBACK: createRequestCallback('test_user2')
             }
           });
           collection = client.db('test').collection('nodeOidcTest');
@@ -202,10 +172,6 @@ describe('MONGODB-OIDC', function () {
       });
 
       describe('1.6 Allowed Hosts Blocked', function () {
-        before(function () {
-          cache.clear();
-        });
-
         // Assert that a ``find`` operation fails with a client-side error.
         // Close the client.
         context('when ALLOWED_HOSTS is empty', function () {
@@ -217,7 +183,7 @@ describe('MONGODB-OIDC', function () {
                 REQUEST_TOKEN_CALLBACK: createRequestCallback()
               }
             });
-            collection = client.db('test').collection('test');
+            collection = client.db('test').collection('nodeOidcTest');
           });
 
           // Assert that a ``find`` operation fails with a client-side error.
@@ -273,7 +239,7 @@ describe('MONGODB-OIDC', function () {
                 REQUEST_TOKEN_CALLBACK: createRequestCallback('test_user1', 600)
               }
             });
-            collection = client.db('test').collection('test');
+            collection = client.db('test').collection('nodeOidcTest');
           });
 
           it('fails validation', async function () {
@@ -300,7 +266,7 @@ describe('MONGODB-OIDC', function () {
           client = new MongoClient(
             'mongodb://localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=PROVIDER_NAME:aws'
           );
-          collection = client.db('test').collection('test');
+          collection = client.db('test').collection('nodeOidcTest');
         });
 
         // Create a client with a url of the form mongodb://localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=PROVIDER_NAME:aws.
@@ -317,7 +283,7 @@ describe('MONGODB-OIDC', function () {
           client = new MongoClient(
             'mongodb://localhost:27018/?authMechanism=MONGODB-OIDC&authMechanismProperties=PROVIDER_NAME:aws&directConnection=true&readPreference=secondaryPreferred'
           );
-          collection = client.db('test').collection('test');
+          collection = client.db('test').collection('nodeOidcTest');
         });
 
         // Create a client with a url of the form mongodb://localhost:27018/?authMechanism=MONGODB-OIDC&authMechanismProperties=PROVIDER_NAME:aws&directConnection=true&readPreference=secondaryPreferred.
@@ -341,7 +307,7 @@ describe('MONGODB-OIDC', function () {
           client = new MongoClient(
             'mongodb://localhost:27018/?authMechanism=MONGODB-OIDC&authMechanismProperties=PROVIDER_NAME:aws&directConnection=true&readPreference=secondaryPreferred'
           );
-          collection = client.db('test').collection('test');
+          collection = client.db('test').collection('nodeOidcTest');
         });
 
         after(function () {
@@ -369,7 +335,7 @@ describe('MONGODB-OIDC', function () {
               }
             }
           );
-          collection = client.db('test').collection('test');
+          collection = client.db('test').collection('nodeOidcTest');
         });
 
         // Create a client with a url of the form mongodb://localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=PROVIDER_NAME:aws, and an ALLOWED_HOSTS that is an empty list.
@@ -402,7 +368,7 @@ describe('MONGODB-OIDC', function () {
           client = new MongoClient(`${process.env.MONGODB_URI_SINGLE}?authMechanism=MONGODB-OIDC`, {
             authMechanismProperties: authMechanismProperties
           });
-          collection = client.db('test').collection('test');
+          collection = client.db('test').collection('nodeOidcTest');
         });
 
         // Perform a find operation that succeeds. Verify that the request callback was called with the
@@ -424,7 +390,7 @@ describe('MONGODB-OIDC', function () {
               }
             }
           });
-          collection = client.db('test').collection('test');
+          collection = client.db('test').collection('nodeOidcTest');
         });
 
         // Perform a find operation that fails.
@@ -457,7 +423,7 @@ describe('MONGODB-OIDC', function () {
                 }
               }
             );
-            collection = client.db('test').collection('test');
+            collection = client.db('test').collection('nodeOidcTest');
           });
 
           // Perform a find operation that fails.
@@ -515,48 +481,36 @@ describe('MONGODB-OIDC', function () {
       });
 
       before(async function () {
-        cache.clear();
-        client = new MongoClient('mongodb://localhost/?authMechanism=MONGODB-OIDC', {
+        // Create a client with a request callback that returns a valid token.
+        client = new MongoClient(`${process.env.MONGODB_URI_SINGLE}?authMechanism=MONGODB-OIDC`, {
           authMechanismProperties: authMechanismProperties
         });
+        // Set a fail point for saslStart commands of the form:
+        //
+        // {
+        //   "configureFailPoint": "failCommand",
+        //   "mode": {
+        //     "times": 2
+        //   },
+        //   "data": {
+        //     "failCommands": [
+        //       "saslStart"
+        //     ],
+        //     "errorCode": 18
+        //   }
+        // }
+        //
+        // Note
+        //
+        // The driver MUST either use a unique appName or explicitly remove the failCommand after the test to prevent leakage.
+        //
         await setupFailPoint();
-        await client.db('test').collection('test').findOne();
-        await client.close();
       });
 
-      // Clear the cache.
-      // Create a client with a request callback that returns a valid token that will not expire soon.
-      // Set a fail point for saslStart commands of the form:
-      //
-      // {
-      //   "configureFailPoint": "failCommand",
-      //   "mode": {
-      //     "times": 2
-      //   },
-      //   "data": {
-      //     "failCommands": [
-      //       "saslStart"
-      //     ],
-      //     "errorCode": 18
-      //   }
-      // }
-      //
-      // Note
-      //
-      // The driver MUST either use a unique appName or explicitly remove the failCommand after the test to prevent leakage.
-      //
-      // Perform a find operation that succeeds.
-      // Close the client.
-      // Create a new client with the same properties without clearing the cache.
-      // Set a fail point for saslStart commands.
       // Perform a find operation that succeeds.
       // Close the client.
       it('successfully speculative authenticates', async function () {
-        client = new MongoClient('mongodb://localhost/?authMechanism=MONGODB-OIDC', {
-          authMechanismProperties: authMechanismProperties
-        });
-        await setupFailPoint();
-        const result = await client.db('test').collection('test').findOne();
+        const result = await client.db('test').collection('nodeOidcTest').findOne();
         expect(result).to.be.null;
       });
     });
@@ -573,11 +527,9 @@ describe('MONGODB-OIDC', function () {
       };
 
       describe('5.1 Succeeds', function () {
-        const requestCallback = createRequestCallback('test_user1', 600);
-        const refreshSpy = sinon.spy(createRefreshCallback('test_user1', 600));
+        const requestSpy = sinon.spy(createRequestCallback('test_user1', 60));
         const authMechanismProperties = {
-          REQUEST_TOKEN_CALLBACK: requestCallback,
-          REFRESH_TOKEN_CALLBACK: refreshSpy
+          REQUEST_TOKEN_CALLBACK: requestSpy
         };
         const commandStartedEvents: CommandStartedEvent[] = [];
         const commandSucceededEvents: CommandSucceededEvent[] = [];
@@ -623,13 +575,17 @@ describe('MONGODB-OIDC', function () {
         };
 
         before(async function () {
-          cache.clear();
-          client = new MongoClient('mongodb://localhost/?authMechanism=MONGODB-OIDC', {
+          // Create a default OIDC client and an event listener. The following assumes that the driver does not
+          //   emit saslStart or saslContinue events. If the driver does emit those events,
+          //   ignore/filter them for the purposes of this test.
+          client = new MongoClient(`${process.env.MONGODB_URI_SINGLE}?authMechanism=MONGODB-OIDC`, {
             authMechanismProperties: authMechanismProperties
           });
-          await client.db('test').collection('test').findOne();
-          expect(refreshSpy).to.not.be.called;
-          client.close();
+          // Perform a find operation that succeeds.
+          // Assert that the request callback has been called once.
+          // Clear the listener state if possible.
+          await client.db('test').collection('nodeOidcTest').findOne();
+          expect(requestSpy).to.have.been.calledOnce;
         });
 
         afterEach(async function () {
@@ -637,12 +593,6 @@ describe('MONGODB-OIDC', function () {
           await client.close();
         });
 
-        // Clear the cache.
-        // Create request and refresh callbacks that return valid credentials that will not expire soon.
-        // Create a client with the callbacks and an event listener. The following assumes that the driver does not emit saslStart or saslContinue events. If the driver does emit those events, ignore/filter them for the purposes of this test.
-        // Perform a find operation that succeeds.
-        // Assert that the refresh callback has not been called.
-        // Clear the listener state if possible.
         // Force a reauthenication using a failCommand of the form:
         //
         // {
@@ -663,20 +613,16 @@ describe('MONGODB-OIDC', function () {
         // the driver MUST either use a unique appName or explicitly remove the failCommand after the test to prevent leakage.
         //
         // Perform another find operation that succeeds.
-        // Assert that the refresh callback has been called once, if possible.
+        // Assert that the request callback has been called twice.
         // Assert that the ordering of list started events is [find], , find. Note that if the listener stat could not be cleared then there will and be extra find command.
         // Assert that the list of command succeeded events is [find].
         // Assert that a find operation failed once during the command execution.
         // Close the client.
         it('successfully reauthenticates', async function () {
-          client = new MongoClient('mongodb://localhost/?authMechanism=MONGODB-OIDC', {
-            authMechanismProperties: authMechanismProperties,
-            monitorCommands: true
-          });
-          addListeners();
           await setupFailPoint();
-          await client.db('test').collection('test').findOne();
-          expect(refreshSpy).to.have.been.calledOnce;
+          addListeners();
+          await client.db('test').collection('nodeOidcTest').findOne();
+          expect(requestSpy).to.have.been.calledTwice;
           expect(commandStartedEvents.map(event => event.commandName)).to.deep.equal([
             'find',
             'find'
@@ -686,12 +632,11 @@ describe('MONGODB-OIDC', function () {
         });
       });
 
-      describe('5.2 Retries and Succeeds with Cache', function () {
-        const requestCallback = createRequestCallback('test_user1', 600);
-        const refreshCallback = createRefreshCallback('test_user1', 600);
+      describe('5.2 Succeeds no refresh', function () {
+        const requestCallback = createRequestCallback('test_user1', 600, { accessToken: '' });
+        const requestSpy = sinon.spy(requestCallback);
         const authMechanismProperties = {
-          REQUEST_TOKEN_CALLBACK: requestCallback,
-          REFRESH_TOKEN_CALLBACK: refreshCallback
+          REQUEST_TOKEN_CALLBACK: requestSpy
         };
         // Sets up the fail point for the find to reauthenticate.
         const setupFailPoint = async () => {
@@ -711,11 +656,14 @@ describe('MONGODB-OIDC', function () {
         };
 
         before(async function () {
-          cache.clear();
-          client = new MongoClient('mongodb://localhost/?authMechanism=MONGODB-OIDC', {
+          // Create a default OIDC client with a request callback that does not return a refresh token.
+          client = new MongoClient(`${process.env.MONGODB_URI_SINGLE}?authMechanism=MONGODB-OIDC`, {
             authMechanismProperties: authMechanismProperties
           });
-          await client.db('test').collection('test').findOne();
+          // Perform a ``find`` operation that succeeds.
+          // Assert that the request callback has been called once.
+          await client.db('test').collection('nodeOidcTest').findOne();
+          expect(requestSpy).to.have.been.calledOnce;
           await setupFailPoint();
         });
 
@@ -724,9 +672,6 @@ describe('MONGODB-OIDC', function () {
           await client.close();
         });
 
-        // Clear the cache.
-        // Create request and refresh callbacks that return valid credentials that will not expire soon.
-        // Perform a find operation that succeeds.
         // Force a reauthenication using a failCommand of the form:
         //
         // {
@@ -743,19 +688,20 @@ describe('MONGODB-OIDC', function () {
         // }
         //
         // Perform a find operation that succeeds.
+        // Assert that the request callback has been called twice.
         // Close the client.
         it('successfully authenticates', async function () {
-          const result = await client.db('test').collection('test').findOne();
+          const result = await client.db('test').collection('nodeOidcTest').findOne();
+          expect(requestSpy).to.have.been.calledTwice;
           expect(result).to.be.null;
         });
       });
 
-      describe('5.3 Retries and Fails with no Cache', function () {
+      describe('5.3 Succeeds after refresh fails', function () {
         const requestCallback = createRequestCallback('test_user1', 600);
-        const refreshCallback = createRefreshCallback('test_user1', 600);
+        const requestSpy = sinon.spy(requestCallback);
         const authMechanismProperties = {
-          REQUEST_TOKEN_CALLBACK: requestCallback,
-          REFRESH_TOKEN_CALLBACK: refreshCallback
+          REQUEST_TOKEN_CALLBACK: requestSpy
         };
         // Sets up the fail point for the find to reauthenticate.
         const setupFailPoint = async () => {
@@ -768,19 +714,21 @@ describe('MONGODB-OIDC', function () {
                 times: 2
               },
               data: {
-                failCommands: ['find', 'saslStart'],
+                failCommands: ['find', 'saslContinue'],
                 errorCode: 391
               }
             });
         };
 
         before(async function () {
-          cache.clear();
-          client = new MongoClient('mongodb://localhost/?authMechanism=MONGODB-OIDC', {
+          // Create a default OIDC client.
+          client = new MongoClient(`${process.env.MONGODB_URI_SINGLE}?authMechanism=MONGODB-OIDC`, {
             authMechanismProperties: authMechanismProperties
           });
-          await client.db('test').collection('test').findOne();
-          cache.clear();
+          // Perform a ``find`` operation that succeeds.
+          // Assert that the request callback has been called once.
+          await client.db('test').collection('nodeOidcTest').findOne();
+          expect(requestSpy).to.have.been.calledOnce;
           await setupFailPoint();
         });
 
@@ -789,10 +737,72 @@ describe('MONGODB-OIDC', function () {
           await client.close();
         });
 
-        // Clear the cache.
-        // Create request and refresh callbacks that return valid credentials that will not expire soon.
         // Perform a find operation that succeeds (to force a speculative auth).
-        // Clear the cache.
+        // Force a reauthenication using a failCommand of the form:
+        //
+        // {
+        //   "configureFailPoint": "failCommand",
+        //   "mode": {
+        //     "times": 2
+        //   },
+        //   "data": {
+        //     "failCommands": [
+        //       "find", "saslContinue"
+        //     ],
+        //     "errorCode": 391
+        //   }
+        // }
+        //
+        // Perform a find operation that succeeds.
+        // Assert that the request callback has been called three times.
+        // Close the client.
+        it('successfully authenticates', async function () {
+          const result = await client.db('test').collection('nodeOidcTest').findOne();
+          expect(requestSpy).to.have.been.calledThrice;
+          expect(result).to.be.null;
+        });
+      });
+
+      describe('5.3 Fails', function () {
+        const requestCallback = createRequestCallback('test_user1', 600);
+        const requestSpy = sinon.spy(requestCallback);
+        const authMechanismProperties = {
+          REQUEST_TOKEN_CALLBACK: requestSpy
+        };
+        // Sets up the fail point for the find to reauthenticate.
+        const setupFailPoint = async () => {
+          return await client
+            .db()
+            .admin()
+            .command({
+              configureFailPoint: 'failCommand',
+              mode: {
+                times: 2
+              },
+              data: {
+                failCommands: ['find', 'saslContinue'],
+                errorCode: 391
+              }
+            });
+        };
+
+        before(async function () {
+          // Create a default OIDC client.
+          client = new MongoClient(`${process.env.MONGODB_URI_SINGLE}?authMechanism=MONGODB-OIDC`, {
+            authMechanismProperties: authMechanismProperties
+          });
+          // Perform a find operation that succeeds (to force a speculative auth).
+          // Assert that the request callback has been called once.
+          await client.db('test').collection('nodeOidcTest').findOne();
+          expect(requestSpy).to.have.been.calledOnce;
+          await setupFailPoint();
+        });
+
+        afterEach(async function () {
+          await removeFailPoint();
+          await client.close();
+        });
+
         // Force a reauthenication using a failCommand of the form:
         //
         // {
@@ -809,18 +819,20 @@ describe('MONGODB-OIDC', function () {
         // }
         //
         // Perform a find operation that fails.
+        // Assert that the request callback has been called twice.
         // Close the client.
         it('fails authentication', async function () {
           try {
-            await client.db('test').collection('test').findOne();
+            await client.db('test').collection('nodeOidcTest').findOne();
             expect.fail('Reauthentication must fail on the saslStart error');
           } catch (error) {
             // This is the saslStart failCommand bubbled up.
             expect(error).to.be.instanceOf(MongoServerError);
+            expect(requestSpy).to.have.been.calledTwice;
           }
         });
       });
-      // describe('6. Separate Connections Avoid Extra Callback Calls', function () {});
     });
+    // describe('6. Separate Connections Avoid Extra Callback Calls', function () {});
   });
 });

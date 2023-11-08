@@ -164,7 +164,7 @@ describe('MONGODB-OIDC', function () {
           url.searchParams.set('authMechanism', 'MONGODB-OIDC');
           client = new MongoClient(url.toString(), {
             authMechanismProperties: {
-              REQUEST_TOKEN_CALLBACK: createRequestCallback()
+              REQUEST_TOKEN_CALLBACK: createRequestCallback('tesst_user2')
             }
           });
           collection = client.db('test').collection('nodeOidcTest');

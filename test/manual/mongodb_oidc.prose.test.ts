@@ -10,6 +10,7 @@ import {
   type CommandStartedEvent,
   type CommandSucceededEvent,
   type IdPServerInfo,
+  type IdPServerResponse,
   MongoClient,
   MongoInvalidArgumentError,
   MongoMissingCredentialsError,
@@ -45,7 +46,7 @@ describe('MONGODB-OIDC', function () {
 
     // Generates the result the request or refresh callback returns.
     const generateResult = (token: string, expiresInSeconds?: number, extraFields?: any) => {
-      const response: OIDCRequestTokenResult = { accessToken: token };
+      const response: IdPServerResponse = { accessToken: token };
       if (expiresInSeconds) {
         response.expiresInSeconds = expiresInSeconds;
       }
@@ -738,7 +739,6 @@ describe('MONGODB-OIDC', function () {
           await client.close();
         });
 
-        // Perform a find operation that succeeds (to force a speculative auth).
         // Force a reauthenication using a failCommand of the form:
         //
         // {
@@ -781,7 +781,7 @@ describe('MONGODB-OIDC', function () {
                 times: 2
               },
               data: {
-                failCommands: ['find', 'saslContinue'],
+                failCommands: ['find', 'saslStart'],
                 errorCode: 391
               }
             });

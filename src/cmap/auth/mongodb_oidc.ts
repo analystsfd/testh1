@@ -7,7 +7,7 @@ import { type AuthContext, AuthProvider } from './auth_provider';
 import type { MongoCredentials } from './mongo_credentials';
 import { AwsMachineWorkflow } from './mongodb_oidc/aws_machine_workflow';
 import { AzureMachineWorkflow } from './mongodb_oidc/azure_machine_workflow';
-import { HumanWorkflow } from './mongodb_oidc/human_workflow';
+import { CallbackWorkflow } from './mongodb_oidc/callback_workflow';
 
 /** Error when credentials are missing. */
 const MISSING_CREDENTIALS_ERROR = 'AuthContext must provide credentials.';
@@ -74,7 +74,7 @@ export interface Workflow {
 
 /** @internal */
 export const OIDC_WORKFLOWS: Map<ProviderName, Workflow> = new Map();
-OIDC_WORKFLOWS.set('callback', new HumanWorkflow());
+OIDC_WORKFLOWS.set('callback', new CallbackWorkflow());
 OIDC_WORKFLOWS.set('aws', new AwsMachineWorkflow());
 OIDC_WORKFLOWS.set('azure', new AzureMachineWorkflow());
 

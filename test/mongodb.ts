@@ -109,7 +109,7 @@ export * from '../src/cmap/auth/mongodb_oidc';
 export * from '../src/cmap/auth/mongodb_oidc/aws_machine_workflow';
 export * from '../src/cmap/auth/mongodb_oidc/azure_machine_workflow';
 export * from '../src/cmap/auth/mongodb_oidc/azure_token_cache';
-export * from '../src/cmap/auth/mongodb_oidc/human_workflow';
+export * from '../src/cmap/auth/mongodb_oidc/callback_workflow';
 export * from '../src/cmap/auth/mongodb_oidc/machine_workflow';
 export * from '../src/cmap/auth/plain';
 export * from '../src/cmap/auth/providers';

@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 
 import { MongoAWSError } from '../../../error';
-import { ServiceWorkflow } from './service_workflow';
+import { MachineWorkflow } from './machine_workflow';
 
 /** Error for when the token is missing in the environment. */
 const TOKEN_MISSING_ERROR = 'AWS_WEB_IDENTITY_TOKEN_FILE must be set in the environment.';
@@ -11,7 +11,7 @@ const TOKEN_MISSING_ERROR = 'AWS_WEB_IDENTITY_TOKEN_FILE must be set in the envi
  *
  * @internal
  */
-export class AwsServiceWorkflow extends ServiceWorkflow {
+export class AwsMachineWorkflow extends MachineWorkflow {
   constructor() {
     super();
   }

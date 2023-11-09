@@ -10,7 +10,7 @@ import { AuthMechanism } from '../providers';
  * Common behaviour for OIDC device workflows.
  * @internal
  */
-export abstract class ServiceWorkflow implements Workflow {
+export abstract class MachineWorkflow implements Workflow {
   /**
    * Execute the workflow. Looks for AWS_WEB_IDENTITY_TOKEN_FILE in the environment
    * and then attempts to read the token from that path.

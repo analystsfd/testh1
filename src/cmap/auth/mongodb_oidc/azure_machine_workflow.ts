@@ -2,7 +2,7 @@ import { MongoAzureError } from '../../../error';
 import { request } from '../../../utils';
 import type { MongoCredentials } from '../mongo_credentials';
 import { AzureTokenCache } from './azure_token_cache';
-import { ServiceWorkflow } from './service_workflow';
+import { MachineWorkflow } from './machine_workflow';
 
 /** Base URL for getting Azure tokens. */
 const AZURE_BASE_URL =
@@ -33,7 +33,7 @@ export interface AzureAccessToken {
  *
  * @internal
  */
-export class AzureServiceWorkflow extends ServiceWorkflow {
+export class AzureMachineWorkflow extends MachineWorkflow {
   cache = new AzureTokenCache();
 
   /**

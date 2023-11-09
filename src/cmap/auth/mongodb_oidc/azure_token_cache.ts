@@ -1,4 +1,4 @@
-import type { AzureAccessToken } from './azure_service_workflow';
+import type { AzureAccessToken } from './azure_machine_workflow';
 import { Cache, ExpiringCacheEntry } from './cache';
 
 /** @internal */

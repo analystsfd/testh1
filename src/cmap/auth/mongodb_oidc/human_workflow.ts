@@ -32,7 +32,7 @@ const NO_REQUEST_CALLBACK = 'No REQUEST_TOKEN_CALLBACK provided for callback wor
  * OIDC implementation of a callback based workflow.
  * @internal
  */
-export class CallbackWorkflow implements Workflow {
+export class HumanWorkflow implements Workflow {
   /**
    * Get the document to add for speculative authentication. This also needs
    * to add a db field from the credentials source.

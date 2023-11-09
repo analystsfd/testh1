@@ -1,4 +1,4 @@
-import { Binary, BSON, type Document } from 'bson';
+import { BSON, type Document } from 'bson';
 
 import { MongoMissingCredentialsError } from '../../../error';
 import { ns } from '../../../utils';
@@ -11,7 +11,7 @@ import type {
   OIDCRequestFunction,
   Workflow
 } from '../mongodb_oidc';
-import { AuthMechanism } from '../providers';
+import { finishCommandDocument, startCommandDocument } from './command_builders';
 
 /** The current version of OIDC implementation. */
 const OIDC_VERSION = 0;
@@ -44,26 +44,34 @@ export class CallbackWorkflow implements Workflow {
   }
 
   /**
+   * Reauthenticate the callback workflow.
+   * For reauthentication:
+   * - Check if the connection's accessToken is not equal to the token manager's.
+   *   - If they are different, use the token from the manager and set it on the connection and finish auth.
+   *     - On success return, on error continue.
+   * - start auth to update the IDP information
+   *   - If the idp info has changed, clear access token and refresh token.
+   *   - If the idp info has not changed, attempt to use the refresh token.
+   * - if there's still a refresh token at this point, attempt to finish auth with that.
+   * - Attempt the full auth run, on error, raise to user.
+   */
+  async reauthenticate(connection: Connection, credentials: MongoCredentials): Promise<Document> {
+    return this.execute(connection, credentials);
+  }
+
+  /**
    * Execute the OIDC callback workflow.
    */
   async execute(
     connection: Connection,
     credentials: MongoCredentials,
-    reauthenticating: boolean,
     response?: Document
   ): Promise<Document> {
     const requestCallback = credentials.mechanismProperties.REQUEST_TOKEN_CALLBACK;
     if (!requestCallback) {
       throw new MongoMissingCredentialsError(NO_REQUEST_CALLBACK);
     }
-    // No entry in the cache requires us to do all authentication steps
-    // from start to finish, including getting a fresh token for the cache.
-    const startDocument = await this.startAuthentication(
-      connection,
-      credentials,
-      reauthenticating,
-      response
-    );
+    const startDocument = await this.startAuthentication(connection, credentials, response);
     const conversationId = startDocument.conversationId;
     const serverResult = BSON.deserialize(startDocument.payload.buffer) as IdPServerInfo;
     const tokenResult = await this.fetchAccessToken(
@@ -89,11 +97,10 @@ export class CallbackWorkflow implements Workflow {
   private async startAuthentication(
     connection: Connection,
     credentials: MongoCredentials,
-    reauthenticating: boolean,
     response?: Document
   ): Promise<Document> {
     let result;
-    if (!reauthenticating && response?.speculativeAuthenticate) {
+    if (response?.speculativeAuthenticate) {
       result = response.speculativeAuthenticate;
     } else {
       result = await connection.commandAsync(
@@ -145,29 +152,6 @@ export class CallbackWorkflow implements Workflow {
 }
 
 /**
- * Generate the finishing command document for authentication. Will be a
- * saslStart or saslContinue depending on the presence of a conversation id.
- */
-function finishCommandDocument(token: string, conversationId?: number): Document {
-  if (conversationId != null && typeof conversationId === 'number') {
-    return {
-      saslContinue: 1,
-      conversationId: conversationId,
-      payload: new Binary(BSON.serialize({ jwt: token }))
-    };
-  }
-  // saslContinue requires a conversationId in the command to be valid so in this
-  // case the server allows "step two" to actually be a saslStart with the token
-  // as the jwt since the use of the cached value has no correlating conversating
-  // on the particular connection.
-  return {
-    saslStart: 1,
-    mechanism: AuthMechanism.MONGODB_OIDC,
-    payload: new Binary(BSON.serialize({ jwt: token }))
-  };
-}
-
-/**
  * Determines if a result returned from a request or refresh callback
  * function is invalid. This means the result is nullish, doesn't contain
  * the accessToken required field, and does not contain extra fields.
@@ -176,20 +160,4 @@ function isCallbackResultInvalid(tokenResult: unknown): boolean {
   if (tokenResult == null || typeof tokenResult !== 'object') return true;
   if (!('accessToken' in tokenResult)) return true;
   return !Object.getOwnPropertyNames(tokenResult).every(prop => RESULT_PROPERTIES.includes(prop));
-}
-
-/**
- * Generate the saslStart command document.
- */
-function startCommandDocument(credentials: MongoCredentials): Document {
-  const payload: Document = {};
-  if (credentials.username) {
-    payload.n = credentials.username;
-  }
-  return {
-    saslStart: 1,
-    autoAuthorize: 1,
-    mechanism: AuthMechanism.MONGODB_OIDC,
-    payload: new Binary(BSON.serialize(payload))
-  };
 }

@@ -83,6 +83,8 @@ const kHello = Symbol('hello');
 const kAutoEncrypter = Symbol('autoEncrypter');
 /** @internal */
 const kDelayedTimeoutId = Symbol('delayedTimeoutId');
+/** @internal */
+const kAccessToken = Symbol('accessToken');
 
 const INVALID_QUEUE_SIZE = 'Connection internal queue contains more than 1 operation description';
 
@@ -139,6 +141,7 @@ export interface ConnectionOptions
   socketTimeoutMS?: number;
   cancellationToken?: CancellationToken;
   metadata: ClientMetadata;
+  accessToken?: string;
 }
 
 /** @internal */
@@ -196,6 +199,8 @@ export class Connection extends TypedEventEmitter<ConnectionEvents> {
   [kHello]: Document | null;
   /** @internal */
   [kClusterTime]: Document | null;
+  /** @internal */
+  [kAccessToken]?: string;
 
   /** @event */
   static readonly COMMAND_STARTED = COMMAND_STARTED;
@@ -238,6 +243,7 @@ export class Connection extends TypedEventEmitter<ConnectionEvents> {
     this[kDescription] = new StreamDescription(this.address, options);
     this[kGeneration] = options.generation;
     this[kLastUseTime] = now();
+    this[kAccessToken] = options.accessToken;
 
     // setup parser stream and message handling
     this[kQueue] = new Map();
@@ -277,6 +283,14 @@ export class Connection extends TypedEventEmitter<ConnectionEvents> {
 
     // TODO: remove this, and only use the `StreamDescription` in the future
     this[kHello] = response;
+  }
+
+  get accessToken(): string | undefined {
+    return this[kAccessToken];
+  }
+
+  set accessToken(value: string | undefined) {
+    this[kAccessToken] = value;
   }
 
   // Set the whether the message stream is for a monitoring connection.

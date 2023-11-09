@@ -62,9 +62,13 @@ export interface Workflow {
   execute(
     connection: Connection,
     credentials: MongoCredentials,
-    reauthenticating: boolean,
     response?: Document
   ): Promise<Document>;
+
+  /**
+   * Each workflow should specify the correct custom behaviour for reauthentication.
+   */
+  reauthenticate(connection: Connection, credentials: MongoCredentials): Promise<Document>;
 
   /**
    * Get the document to add for speculative authentication.
@@ -97,7 +101,11 @@ export class MongoDBOIDC extends AuthProvider {
     const { connection, reauthenticating, response } = authContext;
     const credentials = getCredentials(authContext);
     const workflow = getWorkflow(credentials);
-    await workflow.execute(connection, credentials, reauthenticating, response);
+    if (reauthenticating) {
+      await workflow.reauthenticate(connection, credentials);
+    } else {
+      await workflow.execute(connection, credentials, response);
+    }
   }
 
   /**

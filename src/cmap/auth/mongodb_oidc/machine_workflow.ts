@@ -1,24 +1,31 @@
-import { BSON, type Document } from 'bson';
+import { type Document } from 'bson';
 
 import { ns } from '../../../utils';
 import type { Connection } from '../../connection';
 import type { MongoCredentials } from '../mongo_credentials';
 import type { Workflow } from '../mongodb_oidc';
-import { AuthMechanism } from '../providers';
+import { finishCommandDocument } from './command_builders';
 
 /**
- * Common behaviour for OIDC device workflows.
+ * Common behaviour for OIDC machine workflows.
  * @internal
  */
 export abstract class MachineWorkflow implements Workflow {
   /**
-   * Execute the workflow. Looks for AWS_WEB_IDENTITY_TOKEN_FILE in the environment
-   * and then attempts to read the token from that path.
+   * Execute the workflow. Gets the token from the subclass implementation.
    */
   async execute(connection: Connection, credentials: MongoCredentials): Promise<Document> {
     const token = await this.getToken(credentials);
-    const command = commandDocument(token);
+    const command = finishCommandDocument(token);
     return connection.commandAsync(ns(credentials.source), command, undefined);
+  }
+
+  /**
+   * Reauthenticate on a machine workflow just grabs the token again since the server
+   * has said the current access token is invalid or expired.
+   */
+  async reauthenticate(connection: Connection, credentials: MongoCredentials): Promise<Document> {
+    return this.execute(connection, credentials);
   }
 
   /**
@@ -26,7 +33,7 @@ export abstract class MachineWorkflow implements Workflow {
    */
   async speculativeAuth(credentials: MongoCredentials): Promise<Document> {
     const token = await this.getToken(credentials);
-    const document = commandDocument(token);
+    const document = finishCommandDocument(token);
     document.db = credentials.source;
     return { speculativeAuthenticate: document };
   }
@@ -35,15 +42,4 @@ export abstract class MachineWorkflow implements Workflow {
    * Get the token from the environment or endpoint.
    */
   abstract getToken(credentials: MongoCredentials): Promise<string>;
-}
-
-/**
- * Create the saslStart command document.
- */
-export function commandDocument(token: string): Document {
-  return {
-    saslStart: 1,
-    mechanism: AuthMechanism.MONGODB_OIDC,
-    payload: BSON.serialize({ jwt: token })
-  };
 }

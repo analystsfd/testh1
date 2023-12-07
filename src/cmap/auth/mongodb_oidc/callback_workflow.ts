@@ -67,7 +67,7 @@ export class CallbackWorkflow implements Workflow {
     credentials: MongoCredentials,
     response?: Document
   ): Promise<Document> {
-    const requestCallback = credentials.mechanismProperties.REQUEST_TOKEN_CALLBACK;
+    const requestCallback = credentials.mechanismProperties.OIDC_TOKEN_CALLBACK;
     if (!requestCallback) {
       throw new MongoMissingCredentialsError(NO_REQUEST_CALLBACK);
     }

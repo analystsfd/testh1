@@ -58,7 +58,7 @@ export interface AuthMechanismProperties extends Document {
   CANONICALIZE_HOST_NAME?: GSSAPICanonicalizationValue;
   AWS_SESSION_TOKEN?: string;
   /** @experimental */
-  REQUEST_TOKEN_CALLBACK?: OIDCRequestFunction;
+  OIDC_TOKEN_CALLBACK?: OIDCRequestFunction;
   /** @experimental */
   PROVIDER_NAME?: 'aws' | 'azure';
   /** @experimental */
@@ -204,7 +204,7 @@ export class MongoCredentials {
 
       if (
         this.mechanismProperties.REFRESH_TOKEN_CALLBACK &&
-        !this.mechanismProperties.REQUEST_TOKEN_CALLBACK
+        !this.mechanismProperties.OIDC_TOKEN_CALLBACK
       ) {
         throw new MongoInvalidArgumentError(
           `A REQUEST_TOKEN_CALLBACK must be provided when using a REFRESH_TOKEN_CALLBACK for mechanism '${this.mechanism}'`
@@ -213,7 +213,7 @@ export class MongoCredentials {
 
       if (
         !this.mechanismProperties.PROVIDER_NAME &&
-        !this.mechanismProperties.REQUEST_TOKEN_CALLBACK
+        !this.mechanismProperties.OIDC_TOKEN_CALLBACK
       ) {
         throw new MongoInvalidArgumentError(
           `Either a PROVIDER_NAME or a REQUEST_TOKEN_CALLBACK must be specified for mechanism '${this.mechanism}'.`

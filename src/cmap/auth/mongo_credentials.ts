@@ -207,7 +207,7 @@ export class MongoCredentials {
         !this.mechanismProperties.OIDC_TOKEN_CALLBACK
       ) {
         throw new MongoInvalidArgumentError(
-          `A REQUEST_TOKEN_CALLBACK must be provided when using a REFRESH_TOKEN_CALLBACK for mechanism '${this.mechanism}'`
+          `A OIDC_TOKEN_CALLBACK must be provided when using a REFRESH_TOKEN_CALLBACK for mechanism '${this.mechanism}'`
         );
       }
 
@@ -216,7 +216,7 @@ export class MongoCredentials {
         !this.mechanismProperties.OIDC_TOKEN_CALLBACK
       ) {
         throw new MongoInvalidArgumentError(
-          `Either a PROVIDER_NAME or a REQUEST_TOKEN_CALLBACK must be specified for mechanism '${this.mechanism}'.`
+          `Either a PROVIDER_NAME or a OIDC_TOKEN_CALLBACK must be specified for mechanism '${this.mechanism}'.`
         );
       }
 

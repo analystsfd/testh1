@@ -26,7 +26,7 @@ const RESULT_PROPERTIES = ['accessToken', 'expiresInSeconds', 'refreshToken'];
 const CALLBACK_RESULT_ERROR =
   'User provided OIDC callbacks must return a valid object with an accessToken.';
 
-const NO_REQUEST_CALLBACK = 'No REQUEST_TOKEN_CALLBACK provided for callback workflow.';
+const NO_REQUEST_CALLBACK = 'No OIDC_TOKEN_CALLBACK provided for callback workflow.';
 
 /**
  * OIDC implementation of a callback based workflow.

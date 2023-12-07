@@ -9,13 +9,12 @@ import {
   type CommandFailedEvent,
   type CommandStartedEvent,
   type CommandSucceededEvent,
-  type IdPServerInfo,
-  type IdPServerResponse,
   MongoClient,
   MongoInvalidArgumentError,
   MongoMissingCredentialsError,
   MongoServerError,
-  type OIDCCallbackContext
+  type OIDCToken,
+  type OIDCTokenParams
 } from '../mongodb';
 
 describe('MONGODB-OIDC', function () {
@@ -32,21 +31,19 @@ describe('MONGODB-OIDC', function () {
       expiresInSeconds?: number,
       extraFields?: any
     ) => {
-      return async (info: IdPServerInfo, context: OIDCCallbackContext) => {
+      return async (params: OIDCTokenParams) => {
         const token = await readFile(path.join(process.env.OIDC_TOKEN_DIR, username), {
           encoding: 'utf8'
         });
         // Do some basic property assertions.
-        expect(context).to.have.property('timeoutSeconds');
-        expect(info).to.have.property('issuer');
-        expect(info).to.have.property('clientId');
+        expect(params).to.have.property('timeoutContext');
         return generateResult(token, expiresInSeconds, extraFields);
       };
     };
 
     // Generates the result the request or refresh callback returns.
     const generateResult = (token: string, expiresInSeconds?: number, extraFields?: any) => {
-      const response: IdPServerResponse = { accessToken: token };
+      const response: OIDCToken = { accessToken: token };
       if (expiresInSeconds) {
         response.expiresInSeconds = expiresInSeconds;
       }
@@ -69,7 +66,7 @@ describe('MONGODB-OIDC', function () {
           // Create the default OIDC client.
           client = new MongoClient(`${process.env.MONGODB_URI_SINGLE}?authMechanism=MONGODB-OIDC`, {
             authMechanismProperties: {
-              REQUEST_TOKEN_CALLBACK: createRequestCallback()
+              OIDC_TOKEN_CALLBACK: createRequestCallback()
             }
           });
           collection = client.db('test').collection('nodeOidcTest');
@@ -90,7 +87,7 @@ describe('MONGODB-OIDC', function () {
           url.searchParams.set('authMechanism', 'MONGODB-OIDC');
           client = new MongoClient(url.toString(), {
             authMechanismProperties: {
-              REQUEST_TOKEN_CALLBACK: createRequestCallback()
+              OIDC_TOKEN_CALLBACK: createRequestCallback()
             }
           });
           collection = client.db('test').collection('nodeOidcTest');
@@ -112,7 +109,7 @@ describe('MONGODB-OIDC', function () {
           url.searchParams.set('authMechanism', 'MONGODB-OIDC');
           client = new MongoClient(url.toString(), {
             authMechanismProperties: {
-              REQUEST_TOKEN_CALLBACK: createRequestCallback()
+              OIDC_TOKEN_CALLBACK: createRequestCallback()
             }
           });
           collection = client.db('test').collection('nodeOidcTest');
@@ -134,7 +131,7 @@ describe('MONGODB-OIDC', function () {
           url.searchParams.set('authMechanism', 'MONGODB-OIDC');
           client = new MongoClient(url.toString(), {
             authMechanismProperties: {
-              REQUEST_TOKEN_CALLBACK: createRequestCallback('test_user2')
+              OIDC_TOKEN_CALLBACK: createRequestCallback('test_user2')
             }
           });
           collection = client.db('test').collection('nodeOidcTest');
@@ -153,7 +150,7 @@ describe('MONGODB-OIDC', function () {
           // Create a client with ``MONGODB_URI_MULTI``, no username, and the OIDC request callback.
           client = new MongoClient(`${process.env.MONGODB_URI_MULTI}?authMechanism=MONGODB-OIDC`, {
             authMechanismProperties: {
-              REQUEST_TOKEN_CALLBACK: createRequestCallback()
+              OIDC_TOKEN_CALLBACK: createRequestCallback()
             }
           });
           collection = client.db('test').collection('nodeOidcTest');
@@ -181,7 +178,7 @@ describe('MONGODB-OIDC', function () {
             client = new MongoClient('mongodb://localhost/?authMechanism=MONGODB-OIDC', {
               authMechanismProperties: {
                 ALLOWED_HOSTS: [],
-                REQUEST_TOKEN_CALLBACK: createRequestCallback()
+                OIDC_TOKEN_CALLBACK: createRequestCallback()
               }
             });
             collection = client.db('test').collection('nodeOidcTest');
@@ -211,7 +208,7 @@ describe('MONGODB-OIDC', function () {
             //   {
             //     authMechanismProperties: {
             //       ALLOWED_HOSTS: ['example.com'],
-            //       REQUEST_TOKEN_CALLBACK: createRequestCallback('test_user1', 600)
+            //       OIDC_TOKEN_CALLBACK: createRequestCallback('test_user1', 600)
             //     }
             //   }
             // );
@@ -237,7 +234,7 @@ describe('MONGODB-OIDC', function () {
             client = new MongoClient('mongodb://evilmongodb.com/?authMechanism=MONGODB-OIDC', {
               authMechanismProperties: {
                 ALLOWED_HOSTS: ['*mongodb.com'],
-                REQUEST_TOKEN_CALLBACK: createRequestCallback('test_user1', 600)
+                OIDC_TOKEN_CALLBACK: createRequestCallback('test_user1', 600)
               }
             });
             collection = client.db('test').collection('nodeOidcTest');
@@ -361,7 +358,7 @@ describe('MONGODB-OIDC', function () {
         // Create request callback that validates its inputs and returns a valid token.
         const requestSpy = sinon.spy(createRequestCallback('test_user1', 60));
         const authMechanismProperties = {
-          REQUEST_TOKEN_CALLBACK: requestSpy
+          OIDC_TOKEN_CALLBACK: requestSpy
         };
 
         before(async function () {
@@ -386,7 +383,7 @@ describe('MONGODB-OIDC', function () {
           // Create a client with a request callback that returns null.
           client = new MongoClient(`${process.env.MONGODB_URI_SINGLE}?authMechanism=MONGODB-OIDC`, {
             authMechanismProperties: {
-              REQUEST_TOKEN_CALLBACK: () => {
+              OIDC_TOKEN_CALLBACK: () => {
                 return Promise.resolve(null);
               }
             }
@@ -418,7 +415,7 @@ describe('MONGODB-OIDC', function () {
               `${process.env.MONGODB_URI_SINGLE}?authMechanism=MONGODB-OIDC`,
               {
                 authMechanismProperties: {
-                  REQUEST_TOKEN_CALLBACK: () => {
+                  OIDC_TOKEN_CALLBACK: () => {
                     return Promise.resolve({});
                   }
                 }
@@ -448,7 +445,7 @@ describe('MONGODB-OIDC', function () {
       let client: MongoClient;
       const requestCallback = createRequestCallback('test_user1', 600);
       const authMechanismProperties = {
-        REQUEST_TOKEN_CALLBACK: requestCallback
+        OIDC_TOKEN_CALLBACK: requestCallback
       };
 
       // Removes the fail point.
@@ -530,7 +527,7 @@ describe('MONGODB-OIDC', function () {
       describe('5.1 Succeeds', function () {
         const requestSpy = sinon.spy(createRequestCallback('test_user1', 60));
         const authMechanismProperties = {
-          REQUEST_TOKEN_CALLBACK: requestSpy
+          OIDC_TOKEN_CALLBACK: requestSpy
         };
         const commandStartedEvents: CommandStartedEvent[] = [];
         const commandSucceededEvents: CommandSucceededEvent[] = [];
@@ -638,7 +635,7 @@ describe('MONGODB-OIDC', function () {
         const requestCallback = createRequestCallback('test_user1', 600);
         const requestSpy = sinon.spy(requestCallback);
         const authMechanismProperties = {
-          REQUEST_TOKEN_CALLBACK: requestSpy
+          OIDC_TOKEN_CALLBACK: requestSpy
         };
         // Sets up the fail point for the find to reauthenticate.
         const setupFailPoint = async () => {
@@ -703,7 +700,7 @@ describe('MONGODB-OIDC', function () {
         const requestCallback = createRequestCallback('test_user1', 600);
         const requestSpy = sinon.spy(requestCallback);
         const authMechanismProperties = {
-          REQUEST_TOKEN_CALLBACK: requestSpy
+          OIDC_TOKEN_CALLBACK: requestSpy
         };
         // Sets up the fail point for the find to reauthenticate.
         const setupFailPoint = async () => {
@@ -768,7 +765,7 @@ describe('MONGODB-OIDC', function () {
         const requestCallback = createRequestCallback('test_user1', 600);
         const requestSpy = sinon.spy(requestCallback);
         const authMechanismProperties = {
-          REQUEST_TOKEN_CALLBACK: requestSpy
+          OIDC_TOKEN_CALLBACK: requestSpy
         };
         // Sets up the fail point for the find to reauthenticate.
         const setupFailPoint = async () => {

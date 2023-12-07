@@ -246,7 +246,13 @@ export class TestConfiguration {
       serverOptions.ConnectionType = ModernConnection;
     }
 
-    console.log('connection string new client', connectionString);
+    if (process.env.AWS_WEB_IDENTITY_TOKEN_FILE) {
+      return new MongoClient(
+        `${process.env.MONGODB_URI_SINGLE}/?authMechanism=MONGODB-OIDC&authMechanismProperties=PROVIDER_NAME:aws`,
+        serverOptions
+      );
+    }
+
     return new MongoClient(connectionString, serverOptions);
   }
 

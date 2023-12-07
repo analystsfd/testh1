@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [6.4.0](https://github.com/mongodb/node-mongodb-native/compare/v6.3.0...v6.4.0) (2023-12-07)
+
+
+### Features
+
+* **NODE-3689:** require hello command for connection handshake to use OP_MSG disallowing OP_QUERY ([#3938](https://github.com/mongodb/node-mongodb-native/issues/3938)) ([ce7df0f](https://github.com/mongodb/node-mongodb-native/commit/ce7df0f79ed764d4a36caf1562cea4f5015c0ea6))
+
+
+### Bug Fixes
+
+* **NODE-5765:** change type for countDocuments ([#3932](https://github.com/mongodb/node-mongodb-native/issues/3932)) ([22cae0f](https://github.com/mongodb/node-mongodb-native/commit/22cae0fbc0ad4043e27210577427870b8ec287f5))
+
 ## [6.3.0](https://github.com/mongodb/node-mongodb-native/compare/v6.2.0...v6.3.0) (2023-11-15)
 
 

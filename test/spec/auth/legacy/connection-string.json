@@ -492,7 +492,7 @@
         "source": "$external",
         "mechanism": "MONGODB-OIDC",
         "mechanism_properties": {
-            "REQUEST_TOKEN_CALLBACK": true
+            "OIDC_TOKEN_CALLBACK": true
         }
       }
     },
@@ -507,23 +507,7 @@
         "source": "$external",
         "mechanism": "MONGODB-OIDC",
         "mechanism_properties": {
-            "REQUEST_TOKEN_CALLBACK": true
-        }
-      }
-    },
-    {
-      "description": "should recognise the mechanism with request and refresh callback (MONGODB-OIDC)",
-      "uri": "mongodb://localhost/?authMechanism=MONGODB-OIDC",
-      "callback": ["oidcRequest", "oidcRefresh"],
-      "valid": true,
-      "credential": {
-        "username": null,
-        "password": null,
-        "source": "$external",
-        "mechanism": "MONGODB-OIDC",
-        "mechanism_properties": {
-            "REQUEST_TOKEN_CALLBACK": true,
-            "REFRESH_TOKEN_CALLBACK": true
+            "OIDC_TOKEN_CALLBACK": true
         }
       }
     },
@@ -538,7 +522,7 @@
         "source": "$external",
         "mechanism": "MONGODB-OIDC",
         "mechanism_properties": {
-            "REQUEST_TOKEN_CALLBACK": true
+            "OIDC_TOKEN_CALLBACK": true
         }
       }
     },

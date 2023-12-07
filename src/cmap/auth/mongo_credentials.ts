@@ -203,15 +203,6 @@ export class MongoCredentials {
       }
 
       if (
-        this.mechanismProperties.REFRESH_TOKEN_CALLBACK &&
-        !this.mechanismProperties.OIDC_TOKEN_CALLBACK
-      ) {
-        throw new MongoInvalidArgumentError(
-          `A OIDC_TOKEN_CALLBACK must be provided when using a REFRESH_TOKEN_CALLBACK for mechanism '${this.mechanism}'`
-        );
-      }
-
-      if (
         !this.mechanismProperties.PROVIDER_NAME &&
         !this.mechanismProperties.OIDC_TOKEN_CALLBACK
       ) {

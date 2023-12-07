@@ -246,6 +246,7 @@ export class TestConfiguration {
       serverOptions.ConnectionType = ModernConnection;
     }
 
+    console.log('connection string new client', connectionString);
     return new MongoClient(connectionString, serverOptions);
   }
 

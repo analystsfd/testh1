@@ -100,6 +100,13 @@ export async function topologySatisfies(
       if (!ok && skipReason == null) {
         skipReason = `requires auth but auth is not enabled`;
       }
+      if (
+        r.authMechanism &&
+        !r.serverParameters?.authenticationMechanisms.includes(r.authMechanism)
+      ) {
+        ok &&= false;
+        skipReason = `requires ${r.authMechanism} to be supported by the server`;
+      }
     } else if (r.auth === false) {
       ok &&= process.env.AUTH === 'noauth' || process.env.AUTH == null;
       if (!ok && skipReason == null) skipReason = `requires no auth but auth is enabled`;

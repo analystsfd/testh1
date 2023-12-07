@@ -7,14 +7,14 @@ import type { MongoCredentials } from '../mongo_credentials';
 import type {
   IdPServerInfo,
   IdPServerResponse,
-  OIDCCallbackContext,
   OIDCRequestFunction,
+  OIDCTokenParams,
   Workflow
 } from '../mongodb_oidc';
 import { finishCommandDocument, startCommandDocument } from './command_builders';
 
 /** The current version of OIDC implementation. */
-const OIDC_VERSION = 0;
+const OIDC_VERSION = 1;
 
 /** 5 minutes in seconds */
 const TIMEOUT_S = 300;
@@ -139,9 +139,12 @@ export class CallbackWorkflow implements Workflow {
     serverInfo: IdPServerInfo,
     requestCallback: OIDCRequestFunction
   ): Promise<IdPServerResponse> {
-    const context: OIDCCallbackContext = { timeoutSeconds: TIMEOUT_S, version: OIDC_VERSION };
+    const params: OIDCTokenParams = {
+      timeoutContext: AbortSignal.timeout(TIMEOUT_S),
+      version: OIDC_VERSION
+    };
     // With no token in the cache we use the request callback.
-    const result = await requestCallback(serverInfo, context);
+    const result = await requestCallback(params);
     // Validate that the result returned by the callback is acceptable. If it is not
     // we must clear the token result from the cache.
     if (isCallbackResultInvalid(result)) {

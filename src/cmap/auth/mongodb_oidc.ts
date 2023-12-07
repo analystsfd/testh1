@@ -36,10 +36,17 @@ export interface IdPServerResponse {
  * @public
  * @experimental
  */
-export interface OIDCCallbackContext {
-  refreshToken?: string;
-  timeoutSeconds?: number;
-  timeoutContext?: AbortSignal;
+export interface OIDCToken {
+  accessToken: string;
+  expiresInSeconds?: number;
+}
+
+/**
+ * @public
+ * @experimental
+ */
+export interface OIDCTokenParams {
+  timeoutContext: AbortSignal;
   version: number;
 }
 
@@ -47,10 +54,7 @@ export interface OIDCCallbackContext {
  * @public
  * @experimental
  */
-export type OIDCRequestFunction = (
-  info: IdPServerInfo,
-  context: OIDCCallbackContext
-) => Promise<IdPServerResponse>;
+export type OIDCRequestFunction = (params: OIDCTokenParams) => Promise<OIDCToken>;
 
 type ProviderName = 'aws' | 'azure' | 'callback';
 

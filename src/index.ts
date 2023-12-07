@@ -245,8 +245,9 @@ export type {
 export type {
   IdPServerInfo,
   IdPServerResponse,
-  OIDCCallbackContext,
-  OIDCRequestFunction
+  OIDCRequestFunction,
+  OIDCToken,
+  OIDCTokenParams
 } from './cmap/auth/mongodb_oidc';
 export type {
   MessageHeader,

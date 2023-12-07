@@ -109,10 +109,9 @@ const testConfigBeforeHook = async function () {
     this.configuration = new AstrolabeTestConfiguration(process.env.DRIVERS_ATLAS_TESTING_URI, {});
     return;
   }
-  // TODO(NODE-5035): Implement OIDC support. Creating the MongoClient will fail
-  // with "MongoInvalidArgumentError: AuthMechanism 'MONGODB-OIDC' not supported"
-  // as is expected until that ticket goes in. Then this condition gets removed.
+
   if (MONGODB_URI && MONGODB_URI.includes('MONGODB-OIDC')) {
+    console.log(MONGODB_URI);
     this.configuration = new TestConfiguration(MONGODB_URI, {});
     return;
   }

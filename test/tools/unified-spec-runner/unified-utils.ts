@@ -204,9 +204,19 @@ export function makeConnectionString(
   uri: string,
   uriOptions: Record<string, unknown> = {}
 ): string {
+  console.log(uri, uriOptions);
   const connectionString = new ConnectionString(uri);
   for (const [name, value] of Object.entries(uriOptions ?? {})) {
-    connectionString.searchParams.set(name, String(value));
+    // If name is authMechanismProperties and value is { $$placeholder: 1 }
+    // Then look at the environment for the proper value to set.
+    if (name === 'authMechanismProperties' && '$$placeholder' in (value as any)) {
+      // If we're in AWS set the PROVIDER_NAME.
+      if (process.env.AWS_WEB_IDENTITY_TOKEN_FILE) {
+        connectionString.searchParams.set(name, 'PROVIDER_NAME:aws');
+      }
+    } else {
+      connectionString.searchParams.set(name, String(value));
+    }
   }
   return connectionString.toString();
 }

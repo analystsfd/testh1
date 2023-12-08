@@ -192,7 +192,7 @@ functions:
           PROVIDER_NAME="aws" \
           AWS_WEB_IDENTITY_TOKEN_FILE="/tmp/tokens/test_user1" \
           PROJECT_DIRECTORY="${PROJECT_DIRECTORY}" \
-            bash ${PROJECT_DIRECTORY}/.evergreen/run-oidc-tests.sh
+            bash ${PROJECT_DIRECTORY}/.evergreen/run-oidc-auth-tests.sh
 
   "run tests":
     - command: shell.exec

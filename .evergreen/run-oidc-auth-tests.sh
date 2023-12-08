@@ -22,11 +22,13 @@ if [ "$PROVIDER_NAME" = "azure" ]; then
   export MONGODB_URI="${MONGODB_URI},TOKEN_AUDIENCE:api%3A%2F%2F${AZUREOIDC_CLIENTID}"
   npm run check:oidc-auth-azure
 else
-  export MONGODB_URI="mongodb://bob:pwd123@127.0.0.1:27017/?authMechanism=MONGODB-OIDC&authMechanismProperties=PROVIDER_NAME:aws"
-
   if [ -z "${OIDC_TOKEN_DIR}" ]; then
     echo "Must specify OIDC_TOKEN_DIR"
     exit 1
   fi
+
+  export MONGODB_URI="${MONGODB_URI}/?authMechanism=MONGODB-OIDC&authMechanismProperties=PROVIDER_NAME:aws"
+  export UTIL_CLIENT_USER="bob"
+  export UTIL_CLIENT_PASSWORD="pwd123"
   npm run check:oidc-auth-aws
 fi

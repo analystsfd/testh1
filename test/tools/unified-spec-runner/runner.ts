@@ -73,6 +73,13 @@ async function runUnifiedTest(
   if (ctx.configuration.isLoadBalanced) {
     // The util client can always point at the single mongos LB frontend.
     utilClient = ctx.configuration.newClient(ctx.configuration.singleMongosLoadBalancerUri);
+  } else if (process.env.UTIL_CLIENT_USER && process.env.UTIL_CLIENT_PASSWORD) {
+    utilClient = ctx.configuration.newClient({
+      auth: {
+        username: process.env.UTIL_CLIENT_USER,
+        password: process.env.UTIL_CLIENT_PASSWORD
+      }
+    });
   } else {
     utilClient = ctx.configuration.newClient();
   }

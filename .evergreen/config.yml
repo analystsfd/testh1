@@ -148,6 +148,21 @@ functions:
           OIDC_ATLAS_URI_MULTI="${OIDC_ATLAS_URI_MULTI}" \
           PROJECT_DIRECTORY="${PROJECT_DIRECTORY}" \
             bash ${PROJECT_DIRECTORY}/.evergreen/run-oidc-tests.sh
+  run oidc auth tests aws:
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: src
+        timeout_secs: 300
+        shell: bash
+        script: |
+          ${PREPARE_SHELL}
+
+          OIDC_TOKEN_DIR="/tmp/tokens" \
+          PROVIDER_NAME="aws" \
+          AWS_WEB_IDENTITY_TOKEN_FILE="/tmp/tokens/test_user1" \
+          PROJECT_DIRECTORY="${PROJECT_DIRECTORY}" \
+            bash ${PROJECT_DIRECTORY}/.evergreen/run-oidc-tests.sh
   run tests:
     - command: shell.exec
       type: test
@@ -1842,6 +1857,25 @@ tasks:
       - func: bootstrap mongo-orchestration
       - func: setup oidc roles
       - func: run oidc tests aws
+  - name: test-auth-oidc-aws
+    tags:
+      - latest
+      - replica_set
+      - oidc
+    commands:
+      - command: expansions.update
+        type: setup
+        params:
+          updates:
+            - {key: VERSION, value: latest}
+            - {key: TOPOLOGY, value: replica_set}
+            - {key: AUTH, value: auth}
+            - {key: ORCHESTRATION_FILE, value: auth-oidc.json}
+      - func: install dependencies
+      - func: bootstrap oidc
+      - func: bootstrap mongo-orchestration
+      - func: setup oidc roles
+      - func: run oidc auth tests aws
   - name: test-socks5
     tags: []
     commands:
@@ -3952,6 +3986,7 @@ buildvariants:
       - test-auth-kerberos
       - test-auth-ldap
       - test-auth-oidc
+      - test-auth-oidc-aws
       - test-socks5
       - test-socks5-csfle
       - test-socks5-tls
@@ -4003,6 +4038,7 @@ buildvariants:
       - test-auth-kerberos
       - test-auth-ldap
       - test-auth-oidc
+      - test-auth-oidc-aws
       - test-socks5
       - test-socks5-csfle
       - test-socks5-tls
@@ -4054,6 +4090,7 @@ buildvariants:
       - test-auth-kerberos
       - test-auth-ldap
       - test-auth-oidc
+      - test-auth-oidc-aws
       - test-socks5
       - test-socks5-csfle
       - test-socks5-tls
@@ -4104,6 +4141,7 @@ buildvariants:
       - test-auth-kerberos
       - test-auth-ldap
       - test-auth-oidc
+      - test-auth-oidc-aws
       - test-socks5
       - test-socks5-csfle
       - test-socks5-tls

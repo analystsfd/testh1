@@ -178,6 +178,22 @@ functions:
           PROJECT_DIRECTORY="${PROJECT_DIRECTORY}" \
             bash ${PROJECT_DIRECTORY}/.evergreen/run-oidc-tests.sh
 
+  "run oidc auth tests aws":
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        timeout_secs: 300
+        shell: bash
+        script: |
+          ${PREPARE_SHELL}
+
+          OIDC_TOKEN_DIR="/tmp/tokens" \
+          PROVIDER_NAME="aws" \
+          AWS_WEB_IDENTITY_TOKEN_FILE="/tmp/tokens/test_user1" \
+          PROJECT_DIRECTORY="${PROJECT_DIRECTORY}" \
+            bash ${PROJECT_DIRECTORY}/.evergreen/run-oidc-tests.sh
+
   "run tests":
     - command: shell.exec
       type: test

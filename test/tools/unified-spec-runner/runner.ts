@@ -92,7 +92,6 @@ async function runUnifiedTest(
     // terminate all sessions before each test suite
     await terminateOpenTransactions(utilClient);
 
-    console.log('HERE');
     // Must fetch parameters before checking runOnRequirements
     ctx.configuration.parameters = await utilClient.db().admin().command({ getParameter: '*' });
 

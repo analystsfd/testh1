@@ -200,6 +200,23 @@ TASKS.push(
       ]
     },
     {
+      name: 'test-auth-oidc-aws',
+      tags: ['latest', 'replica_set', 'oidc'],
+      commands: [
+        updateExpansions({
+          VERSION: 'latest',
+          TOPOLOGY: 'replica_set',
+          AUTH: 'auth',
+          ORCHESTRATION_FILE: 'auth-oidc.json'
+        }),
+        { func: 'install dependencies' },
+        { func: 'bootstrap oidc' },
+        { func: 'bootstrap mongo-orchestration' },
+        { func: 'setup oidc roles' },
+        { func: 'run oidc auth tests aws' }
+      ]
+    },
+    {
       name: 'test-socks5',
       tags: [],
       commands: [

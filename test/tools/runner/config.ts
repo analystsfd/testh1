@@ -349,7 +349,7 @@ export class TestConfiguration {
     }
 
     if (this.uri.includes('MONGODB-OIDC')) {
-      return process.env.MONGODB_URI;
+      return process.env.MONGODB_URI!;
     }
 
     const connectionString = url.toString().replace(FILLER_HOST, actualHostsString);

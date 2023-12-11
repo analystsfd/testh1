@@ -519,7 +519,6 @@ export class EntitiesMap<E = Entity> extends Map<string, E> {
         const useMultipleMongoses =
           (config.topologyType === 'LoadBalanced' || config.topologyType === 'Sharded') &&
           entity.client.useMultipleMongoses;
-        console.log('HERE', config.url());
         const uri = makeConnectionString(
           config.url({ useMultipleMongoses }),
           entity.client.uriOptions

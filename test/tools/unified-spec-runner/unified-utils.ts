@@ -41,8 +41,6 @@ export async function topologySatisfies(
 
   let skipReason;
 
-  console.log(config, r);
-
   if (r.minServerVersion) {
     const minVersion = patchVersion(r.minServerVersion);
     ok &&= semverGte(config.version, minVersion);

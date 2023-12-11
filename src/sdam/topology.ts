@@ -31,7 +31,7 @@ import {
   MongoTopologyClosedError
 } from '../error';
 import type { MongoClient, ServerApi } from '../mongo_client';
-import type { MongoLogger } from '../mongo_logger';
+import { MongoLoggableComponent, type MongoLogger } from '../mongo_logger';
 import { TypedEventEmitter } from '../mongo_types';
 import { ReadPreference, type ReadPreferenceLike } from '../read_preference';
 import type { ClientSession } from '../sessions';
@@ -556,7 +556,7 @@ export class Topology extends TypedEventEmitter<TopologyEvents> {
     }
 
     this.client.mongoLogger.debug(
-      'topology',
+      MongoLoggableComponent.SERVER_SELECTION,
       new ServerSelectionStartedEvent(selector, this.description, options?.operationName)
     );
 
@@ -571,6 +571,15 @@ export class Topology extends TypedEventEmitter<TopologyEvents> {
     const transaction = session && session.transaction;
 
     if (isSharded && transaction && transaction.server) {
+      this.client.mongoLogger.debug(
+        MongoLoggableComponent.SERVER_SELECTION,
+        new ServerSelectionSucceededEvent(
+          selector,
+          this.description,
+          transaction.server.pool.address,
+          options?.operationName
+        )
+      );
       callback(undefined, transaction.server);
       return;
     }
@@ -593,7 +602,7 @@ export class Topology extends TypedEventEmitter<TopologyEvents> {
         this.description
       );
       this.client.mongoLogger.debug(
-        'topology',
+        MongoLoggableComponent.SERVER_SELECTION,
         new ServerSelectionFailedEvent(
           selector,
           this.description,
@@ -606,7 +615,7 @@ export class Topology extends TypedEventEmitter<TopologyEvents> {
 
     this[kWaitQueue].push(waitQueueMember);
     this.client.mongoLogger.info(
-      'topology',
+      MongoLoggableComponent.SERVER_SELECTION,
       new WaitingForSuitableServerEvent(
         selector,
         this.description,
@@ -886,7 +895,7 @@ function drainWaitQueue(queue: List<ServerSelectionRequest>, err?: MongoDriverEr
     if (!waitQueueMember[kCancelled]) {
       if (err) {
         waitQueueMember.mongoLogger.debug(
-          'topology',
+          MongoLoggableComponent.SERVER_SELECTION,
           new ServerSelectionFailedEvent(
             waitQueueMember.serverSelector,
             waitQueueMember.topologyDescription,
@@ -927,7 +936,15 @@ function processWaitQueue(topology: Topology) {
         : serverDescriptions;
     } catch (e) {
       waitQueueMember.timeoutController.clear();
-
+      topology.client.mongoLogger.debug(
+        MongoLoggableComponent.SERVER_SELECTION,
+        new ServerSelectionFailedEvent(
+          waitQueueMember.serverSelector,
+          topology.description,
+          e,
+          waitQueueMember?.operationName
+        )
+      );
       waitQueueMember.callback(e);
       continue;
     }
@@ -955,7 +972,7 @@ function processWaitQueue(topology: Topology) {
         topology.description
       );
       topology.client.mongoLogger.debug(
-        'topology',
+        MongoLoggableComponent.SERVER_SELECTION,
         new ServerSelectionFailedEvent(
           waitQueueMember.serverSelector,
           topology.description,
@@ -974,7 +991,7 @@ function processWaitQueue(topology: Topology) {
     waitQueueMember.timeoutController.clear();
 
     topology.client.mongoLogger.debug(
-      'topology',
+      MongoLoggableComponent.SERVER_SELECTION,
       new ServerSelectionSucceededEvent(
         waitQueueMember.serverSelector,
         waitQueueMember.topologyDescription,

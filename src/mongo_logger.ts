@@ -308,7 +308,7 @@ export interface LogConvertible extends Record<string, any> {
 
 /** @internal */
 export function stringifyWithMaxLen(value: any, maxDocumentLength: number): string {
-  const ejson = EJSON.stringify(value);
+  const ejson = EJSON.stringify(value) ?? 'custom function';
 
   return maxDocumentLength !== 0 && ejson.length > maxDocumentLength
     ? `${ejson.slice(0, maxDocumentLength)}...`

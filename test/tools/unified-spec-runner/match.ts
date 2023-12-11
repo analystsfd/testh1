@@ -29,7 +29,8 @@ import {
   ServerDescriptionChangedEvent,
   ServerHeartbeatFailedEvent,
   ServerHeartbeatStartedEvent,
-  ServerHeartbeatSucceededEvent
+  ServerHeartbeatSucceededEvent,
+  TopologyDescriptionChangedEvent
 } from '../../mongodb';
 import { ejson } from '../utils';
 import { type CmapEvent, type CommandEvent, type EntitiesMap, type SdamEvent } from './entities';
@@ -561,6 +562,13 @@ function compareEvents(
         expect(actualEvent[property]).to.equal(expectedSdamEvent[property]);
       }
       return;
+    } else if (expectedEvent.topologyDescriptionChangedEvent) {
+      expect(actualEvent).to.be.instanceOf(TopologyDescriptionChangedEvent);
+      const expectedSdamEvent = expectedEvent.topologyDescriptionChangedEvent;
+      for (const property of Object.keys(expectedSdamEvent)) {
+        expect(actualEvent[property]).to.equal(expectedSdamEvent[property]);
+      }
+      return;
     } else {
       expect.fail(`Encountered unexpected event - ${inspect(actualEvent)}`);
     }
@@ -596,6 +604,8 @@ export function compareLogs(
   actual: ExpectedLogMessage[],
   entities: EntitiesMap
 ): void {
+  console.log('ACTUAL:', actual);
+  console.log('EXPECTED:', expected);
   expect(actual).to.have.lengthOf(expected.length);
 
   for (const [index, actualLog] of actual.entries()) {

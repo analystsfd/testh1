@@ -120,6 +120,10 @@ const EXPECTED_EXPORTS = [
   'ServerHeartbeatStartedEvent',
   'ServerHeartbeatSucceededEvent',
   'ServerOpeningEvent',
+  'ServerSelectionEvent',
+  'ServerSelectionStartedEvent',
+  'ServerSelectionFailedEvent',
+  'ServerSelectionSucceededEvent',
   'ServerType',
   'SrvPollingEvent',
   'Timestamp',
@@ -129,7 +133,8 @@ const EXPECTED_EXPORTS = [
   'TopologyType',
   'UnorderedBulkOperation',
   'UUID',
-  'WriteConcern'
+  'WriteConcern',
+  'WaitingForSuitableServerEvent'
 ];
 
 describe('mongodb entrypoint', () => {

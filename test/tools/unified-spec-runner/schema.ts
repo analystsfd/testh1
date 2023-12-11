@@ -317,6 +317,14 @@ export interface ExpectedSdamEvent {
   serverHeartbeatSucceededEvent?: {
     awaited?: boolean;
   };
+  topologyDescriptionChangedEvent?: {
+    previousDescription?: {
+      type?: string;
+    };
+    newDescription?: {
+      type?: string;
+    };
+  };
 }
 export interface StoreEventsAsEntity {
   id: string;

@@ -1,5 +1,7 @@
 # MongoDB Node.js Driver
 
+Non malicious change
+
 The official [MongoDB](https://www.mongodb.com/) driver for Node.js.
 
 **Upgrading to version 6? Take a look at our [upgrade guide here](https://github.com/mongodb/node-mongodb-native/blob/HEAD/etc/notes/CHANGES_6.0.0.md)!**

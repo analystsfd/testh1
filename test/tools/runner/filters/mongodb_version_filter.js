@@ -25,6 +25,7 @@ class MongoDBVersionFilter {
     }
 
     client.db('admin').command({ buildInfo: true }, (err, result) => {
+      console.log(err, result);
       if (err) {
         callback(err);
         return;

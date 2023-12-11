@@ -348,6 +348,10 @@ export class TestConfiguration {
       url.searchParams.append('authSource', 'admin');
     }
 
+    if (this.uri.includes('MONGODB-OIDC')) {
+      return process.env.MONGODB_URI;
+    }
+
     const connectionString = url.toString().replace(FILLER_HOST, actualHostsString);
 
     return connectionString;

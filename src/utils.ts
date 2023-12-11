@@ -1290,8 +1290,9 @@ export class TimeoutController extends AbortController {
     this.timeoutId = null;
   }
 
+  /** May only be called for non-infinite timeouts */
   getRemainingTimeMS() {
-    return Math.max(this.timeoutTimeMS - (Date.now() - this.startTime) / 1000, 0);
+    return Math.round(Math.max(this.timeoutTimeMS - (Date.now() - this.startTime) / 1000, 0));
   }
 }
 

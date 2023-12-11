@@ -237,7 +237,7 @@ async function runUnifiedTest(
         const filteredLogs = testClient!.collectedLogs.filter(
           log =>
             testClient!.mongoLogger.componentSeverities.serverSelection === 'off' ||
-            log?.data?.operation !== 'n/a'
+            (log?.data?.operation !== 'reconnect topology' && log?.data?.operation !== 'ping')
         );
         compareLogs(expectedLogsForClient.messages, filteredLogs, entities);
       }

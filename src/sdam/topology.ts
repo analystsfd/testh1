@@ -455,6 +455,7 @@ export class Topology extends TypedEventEmitter<TopologyEvents> {
       callback ? callback(error) : this.emit(Topology.ERROR, error);
 
     const readPreference = options.readPreference ?? ReadPreference.primary;
+    options = Object.assign({ operationName: 'ping' }, options);
     this.selectServer(readPreferenceServerSelector(readPreference), options, (err, server) => {
       if (err) {
         return this.close({ force: false }, () => exitWithError(err));

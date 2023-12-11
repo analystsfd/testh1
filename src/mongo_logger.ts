@@ -17,7 +17,6 @@ import type {
   ConnectionPoolClearedEvent,
   ConnectionPoolClosedEvent,
   ConnectionPoolCreatedEvent,
-  ConnectionPoolMonitoringEvent,
   ConnectionPoolReadyEvent,
   ConnectionReadyEvent
 } from './cmap/connection_pool_events';
@@ -35,8 +34,19 @@ import {
   CONNECTION_POOL_CLOSED,
   CONNECTION_POOL_CREATED,
   CONNECTION_POOL_READY,
-  CONNECTION_READY
+  CONNECTION_READY,
+  SERVER_SELECTION_FAILED,
+  SERVER_SELECTION_STARTED,
+  SERVER_SELECTION_SUCCEEDED,
+  WAITING_FOR_SUITABLE_SERVER
 } from './constants';
+import type {
+  ServerSelectionEvent,
+  ServerSelectionFailedEvent,
+  ServerSelectionStartedEvent,
+  ServerSelectionSucceededEvent,
+  WaitingForSuitableServerEvent
+} from './sdam/server_selection_events';
 import { HostAddress, parseUnsignedInteger } from './utils';
 
 /** @internal */
@@ -272,6 +282,10 @@ function compareSeverity(s0: SeverityLevel, s1: SeverityLevel): 1 | 0 | -1 {
 
 /** @internal */
 export type LoggableEvent =
+  | ServerSelectionStartedEvent
+  | ServerSelectionFailedEvent
+  | ServerSelectionSucceededEvent
+  | WaitingForSuitableServerEvent
   | CommandStartedEvent
   | CommandSucceededEvent
   | CommandFailedEvent
@@ -310,6 +324,20 @@ function isLogConvertible(obj: Loggable): obj is LogConvertible {
   return objAsLogConvertible.toLog !== undefined && typeof objAsLogConvertible.toLog === 'function';
 }
 
+function attachServerSelectionFields(
+  log: Record<string, any>,
+  serverSelectionEvent: ServerSelectionEvent,
+  maxDocumentLength: number = DEFAULT_MAX_DOCUMENT_LENGTH
+) {
+  const { selector, operation, topologyDescription, message } = serverSelectionEvent;
+  log.selector = stringifyWithMaxLen(selector, maxDocumentLength);
+  log.operation = operation;
+  log.topologyDescription = stringifyWithMaxLen(topologyDescription, maxDocumentLength);
+  log.message = message;
+
+  return log;
+}
+
 function attachCommandFields(
   log: Record<string, any>,
   commandEvent: CommandStartedEvent | CommandSucceededEvent | CommandFailedEvent
@@ -327,11 +355,8 @@ function attachCommandFields(
   return log;
 }
 
-function attachConnectionFields(
-  log: Record<string, any>,
-  connectionPoolEvent: ConnectionPoolMonitoringEvent
-) {
-  const { host, port } = HostAddress.fromString(connectionPoolEvent.address).toHostPort();
+function attachConnectionFields(log: Record<string, any>, event: any) {
+  const { host, port } = HostAddress.fromString(event.address).toHostPort();
   log.serverHost = host;
   log.serverPort = port;
 
@@ -345,6 +370,21 @@ function defaultLogTransform(
   let log: Omit<Log, 's' | 't' | 'c'> = Object.create(null);
 
   switch (logObject.name) {
+    case SERVER_SELECTION_STARTED:
+      log = attachServerSelectionFields(log, logObject, maxDocumentLength);
+      return log;
+    case SERVER_SELECTION_FAILED:
+      log = attachServerSelectionFields(log, logObject, maxDocumentLength);
+      log.failure = logObject.failure.message;
+      return log;
+    case SERVER_SELECTION_SUCCEEDED:
+      log = attachServerSelectionFields(log, logObject, maxDocumentLength);
+      log = attachConnectionFields(log, logObject);
+      return log;
+    case WAITING_FOR_SUITABLE_SERVER:
+      log = attachServerSelectionFields(log, logObject, maxDocumentLength);
+      log.remainingTimeMS = logObject.remainingTimeMS;
+      return log;
     case COMMAND_STARTED:
       log = attachCommandFields(log, logObject);
       log.message = 'Command started';

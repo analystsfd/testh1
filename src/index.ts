@@ -147,6 +147,13 @@ export {
   TopologyDescriptionChangedEvent,
   TopologyOpeningEvent
 } from './sdam/events';
+export {
+  ServerSelectionEvent,
+  ServerSelectionFailedEvent,
+  ServerSelectionStartedEvent,
+  ServerSelectionSucceededEvent,
+  WaitingForSuitableServerEvent
+} from './sdam/server_selection_events';
 export { SrvPollingEvent } from './sdam/srv_polling';
 
 // type only exports below, these are removed from emitted JS
@@ -305,7 +312,11 @@ export type {
   CONNECTION_POOL_CREATED,
   CONNECTION_POOL_READY,
   CONNECTION_READY,
-  MONGO_CLIENT_EVENTS
+  MONGO_CLIENT_EVENTS,
+  SERVER_SELECTION_FAILED,
+  SERVER_SELECTION_STARTED,
+  SERVER_SELECTION_SUCCEEDED,
+  WAITING_FOR_SUITABLE_SERVER
 } from './constants';
 export type {
   AbstractCursorEvents,

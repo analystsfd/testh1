@@ -335,7 +335,12 @@ export class TestConfiguration {
         const singleUri = new ConnectionString(this.singleMongosLoadBalancerUri);
         actualHostsString = singleUri.hosts[0].toString();
       } else {
-        actualHostsString = this.options.hostAddresses[0].toString();
+        // For OIDC we need to get the URI to the dedicated clusters.
+        if (this.uri.includes('MONGODB-OIDC')) {
+          actualHostsString = process.env.MONGODB_URI;
+        } else {
+          actualHostsString = this.options.hostAddresses[0].toString();
+        }
       }
     }
 

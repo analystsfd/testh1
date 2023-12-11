@@ -107,6 +107,7 @@ export interface ServerSelectionRequest {
   [kCancelled]?: boolean;
   timeoutController: TimeoutController;
   operationName?: string;
+  waitingLogged: boolean;
 }
 
 /** @internal */
@@ -591,7 +592,8 @@ export class Topology extends TypedEventEmitter<TopologyEvents> {
       transaction,
       callback,
       timeoutController: new TimeoutController(options.serverSelectionTimeoutMS),
-      operationName: options?.operationName
+      operationName: options?.operationName,
+      waitingLogged: false
     };
 
     waitQueueMember.timeoutController.signal.addEventListener('abort', () => {
@@ -614,14 +616,6 @@ export class Topology extends TypedEventEmitter<TopologyEvents> {
     });
 
     this[kWaitQueue].push(waitQueueMember);
-    this.client.mongoLogger.info(
-      MongoLoggableComponent.SERVER_SELECTION,
-      new WaitingForSuitableServerEvent(
-        selector,
-        this.description,
-        waitQueueMember.timeoutController.getRemainingTimeMS()
-      )
-    );
     processWaitQueue(this);
   }
 
@@ -951,6 +945,18 @@ function processWaitQueue(topology: Topology) {
 
     let selectedServer: Server | undefined;
     if (selectedDescriptions.length === 0) {
+      if (!waitQueueMember.waitingLogged) {
+        topology.client.mongoLogger.info(
+          MongoLoggableComponent.SERVER_SELECTION,
+          new WaitingForSuitableServerEvent(
+            waitQueueMember.serverSelector,
+            topology.description,
+            waitQueueMember.timeoutController.getRemainingTimeMS(),
+            waitQueueMember?.operationName
+          )
+        );
+        waitQueueMember.waitingLogged = true;
+      }
       topology[kWaitQueue].push(waitQueueMember);
       continue;
     } else if (selectedDescriptions.length === 1) {

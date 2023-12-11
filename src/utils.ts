@@ -1272,6 +1272,7 @@ export async function request(
 export class TimeoutController extends AbortController {
   /** time that timeout begins */
   private startTime: number;
+  private timeoutTimeMS: number;
 
   constructor(
     timeout = 0,
@@ -1279,6 +1280,7 @@ export class TimeoutController extends AbortController {
   ) {
     super();
     this.startTime = Date.now();
+    this.timeoutTimeMS = timeout;
   }
 
   clear() {
@@ -1289,7 +1291,7 @@ export class TimeoutController extends AbortController {
   }
 
   getRemainingTimeMS() {
-    return this.timeoutId ? Infinity : (Date.now() - this.startTime) / 1000;
+    return Math.max(this.timeoutTimeMS - (Date.now() - this.startTime) / 1000, 0);
   }
 }
 

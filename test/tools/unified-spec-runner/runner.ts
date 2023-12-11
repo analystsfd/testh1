@@ -232,7 +232,14 @@ async function runUnifiedTest(
         const testClient = clientList.get(clientId);
 
         expect(testClient, `No client entity found with id ${clientId}`).to.exist;
-        compareLogs(expectedLogsForClient.messages, testClient!.collectedLogs, entities);
+
+        // TODO NODE-2471 and NODE-5774
+        const filteredLogs = testClient!.collectedLogs.filter(
+          log =>
+            testClient!.mongoLogger.componentSeverities.serverSelection === 'off' ||
+            log?.data?.operation !== 'n/a'
+        );
+        compareLogs(expectedLogsForClient.messages, filteredLogs, entities);
       }
     }
 

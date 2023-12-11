@@ -98,12 +98,8 @@ export class ServerSelectionSucceededEvent extends ServerSelectionEvent {
   /** @internal */
   name = SERVER_SELECTION_SUCCEEDED;
   message = 'Server selection succeeded';
-  /**  The hostname, IP address, or Unix domain socket path for the selected server.*/
-  serverHost: string;
-  /** The port for the selected server. Optional; not present for Unix domain sockets.
-   * When the user does not specify a port and the default (27017) is used
-   * */
-  serverPort: number;
+  /** The address (host/port pair) of the pool */
+  address: string;
 
   /** @internal */
   constructor(
@@ -113,9 +109,7 @@ export class ServerSelectionSucceededEvent extends ServerSelectionEvent {
     operation?: string
   ) {
     super(selector, topologyDescription, operation);
-    const { host, port } = HostAddress.fromString(address).toHostPort();
-    this.serverHost = host;
-    this.serverPort = port;
+    this.address = address;
   }
 }
 

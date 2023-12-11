@@ -3,7 +3,7 @@ import * as path from 'path';
 import { loadSpecTests } from '../../spec';
 import { runUnifiedSuite } from '../../tools/unified-spec-runner/runner';
 
-describe('Server Selection Tests - Unified', function () {
+describe.only('Server Selection Tests - Unified', function () {
   const tests = loadSpecTests(path.join('server-selection', 'logging'));
   runUnifiedSuite(tests, test => {
     if (
